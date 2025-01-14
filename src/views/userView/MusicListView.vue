@@ -32,7 +32,121 @@ const musicList = ref([
         uploadTime: '2023-10-02',
         audioUrl: 'path/to/audio2.mp3',
         type: 2,
-    },
+    }, {
+        id: 2,
+        coverUrl: '@/assets/favicon-16x16.png',
+        title: '曲名2',
+        publisher: '发布者2',
+        author: '作者2',
+        uploadTime: '2023-10-02',
+        audioUrl: 'path/to/audio2.mp3',
+        type: 2,
+    }, {
+        id: 2,
+        coverUrl: '@/assets/favicon-16x16.png',
+        title: '曲名2',
+        publisher: '发布者2',
+        author: '作者2',
+        uploadTime: '2023-10-02',
+        audioUrl: 'path/to/audio2.mp3',
+        type: 2,
+    },{ id: 2,
+coverUrl: '@/assets/favicon-16x16.png',
+title: '曲名2',
+publisher: '发布者2',
+author: '作者2',
+uploadTime: '2023-10-02',
+audioUrl: 'path/to/audio2.mp3',
+type: 2,
+},{ id: 2,
+coverUrl: '@/assets/favicon-16x16.png',
+title: '曲名2',
+publisher: '发布者2',
+author: '作者2',
+uploadTime: '2023-10-02',
+audioUrl: 'path/to/audio2.mp3',
+type: 2,
+},{ id: 2,
+coverUrl: '@/assets/favicon-16x16.png',
+title: '曲名2',
+publisher: '发布者2',
+author: '作者2',
+uploadTime: '2023-10-02',
+audioUrl: 'path/to/audio2.mp3',
+type: 2,
+},{ id: 2,
+coverUrl: '@/assets/favicon-16x16.png',
+title: '曲名2',
+publisher: '发布者2',
+author: '作者2',
+uploadTime: '2023-10-02',
+audioUrl: 'path/to/audio2.mp3',
+type: 2,
+},{ id: 2,
+coverUrl: '@/assets/favicon-16x16.png',
+title: '曲名2',
+publisher: '发布者2',
+author: '作者2',
+uploadTime: '2023-10-02',
+audioUrl: 'path/to/audio2.mp3',
+type: 2,
+},{ id: 2,
+coverUrl: '@/assets/favicon-16x16.png',
+title: '曲名2',
+publisher: '发布者2',
+author: '作者2',
+uploadTime: '2023-10-02',
+audioUrl: 'path/to/audio2.mp3',
+type: 2,
+},{ id: 2,
+coverUrl: '@/assets/favicon-16x16.png',
+title: '曲名2',
+publisher: '发布者2',
+author: '作者2',
+uploadTime: '2023-10-02',
+audioUrl: 'path/to/audio2.mp3',
+type: 2,
+},{ id: 2,
+coverUrl: '@/assets/favicon-16x16.png',
+title: '曲名2',
+publisher: '发布者2',
+author: '作者2',
+uploadTime: '2023-10-02',
+audioUrl: 'path/to/audio2.mp3',
+type: 2,
+},{ id: 2,
+coverUrl: '@/assets/favicon-16x16.png',
+title: '曲名2',
+publisher: '发布者2',
+author: '作者2',
+uploadTime: '2023-10-02',
+audioUrl: 'path/to/audio2.mp3',
+type: 2,
+},{ id: 2,
+coverUrl: '@/assets/favicon-16x16.png',
+title: '曲名2',
+publisher: '发布者2',
+author: '作者2',
+uploadTime: '2023-10-02',
+audioUrl: 'path/to/audio2.mp3',
+type: 2,
+},{ id: 2,
+coverUrl: '@/assets/favicon-16x16.png',
+title: '曲名2',
+publisher: '发布者2',
+author: '作者2',
+uploadTime: '2023-10-02',
+audioUrl: 'path/to/audio2.mp3',
+type: 2,
+},{ id: 2,
+coverUrl: '@/assets/favicon-16x16.png',
+title: '曲名2',
+publisher: '发布者2',
+author: '作者2',
+uploadTime: '2023-10-02',
+audioUrl: 'path/to/audio2.mp3',
+type: 2,
+},
     // 其他音乐数据...
 ]);
 
@@ -68,7 +182,7 @@ const deleteMusic = async (musicId) => {
 </script>
 
 <template>
-    <page-container title="歌曲列表">
+    <page-container title="歌曲列表" class="music-list-view">
         <template #extra>
             <div class="search-container">
                 <el-input
@@ -93,7 +207,7 @@ const deleteMusic = async (musicId) => {
             </div>
         </template>
 
-        <el-table :data="musicList" style="width: 100%" v-loading="isLoading" fit>
+        <el-table class="music-list" :data="musicList" style="width: 100%" v-loading="isLoading" fit>
             <el-table-column label="序号" type="index" width="60" />
             <el-table-column label="封面" align="center">
                 <template #default="scope">
@@ -176,6 +290,7 @@ const deleteMusic = async (musicId) => {
 </template>
 
 <style lang="scss" scoped>
+
 .custom-audio {
     width: 100%; /* 使音频控件宽度为100% */
     height: 24px; /* 设置音频控件高度 */

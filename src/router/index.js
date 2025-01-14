@@ -23,7 +23,7 @@ const router = createRouter({
                 },
                 {
                     path: '/user/one',
-                    component: () => import('@/views/userView/OneView.vue'),//个人主页
+                    component: () => import('@/views/userView/ProfilePage.vue'),//个人主页
                 },
                 {
                     path: '/user/music_room',
@@ -46,6 +46,10 @@ const router = createRouter({
                     component: () => import('@/views/userView/RecordView.vue'),//听歌记录
                 },
             ],
+        },
+        {
+            path: '/music_list',
+            component: () => import('@/views/userView/MusicListView.vue'),
         },
     ],
 });
