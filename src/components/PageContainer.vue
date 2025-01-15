@@ -31,12 +31,13 @@ defineProps({
         flex-direction: row;
         align-items: center;
         span {
+            min-width: 30px;
             font-size: 15px;
             color:#909399;
         }
         .extra {
+            width: 100%;
             display: flex;
-            margin-left: 60px;
         }
     }
     .slot{

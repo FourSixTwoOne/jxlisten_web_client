@@ -2,9 +2,10 @@
 import { ref } from 'vue';
 import { Search, Upload } from '@element-plus/icons-vue';
 import defaultCoverUrl from '@/assets/apple-touch-icon.png';
+import CustomPagination from '@/components/CustomPagination.vue';
 
 const isLoading = ref(false);
-const total = ref(0);
+const total = ref(2);
 
 const pageParams = ref({
     page: 1,
@@ -24,189 +25,70 @@ const musicList = ref([
         uploadTime: '2023-10-01',
         audioUrl: 'path/to/audio1.mp3',
         type: 1, // 1: 原创, 2: 翻唱, 3: 转载
+        likeCount: 0,
+        collectCount: 0,
+        isLiked: false,
+        isCollected: false,
     },
     {
         id: 2,
-        coverUrl: '@/assets/favicon-16x16.png',
+        coverUrl: '',
         title: '曲名2',
         publisher: '发布者2',
         author: '作者2',
         uploadTime: '2023-10-02',
         audioUrl: 'path/to/audio2.mp3',
-        type: 2,
+        type: 2, // 2: 翻唱
+        likeCount: 0,
+        collectCount: 0,
+        isLiked: false,
+        isCollected: false,
     },
-    {
-        id: 2,
-        coverUrl: '@/assets/favicon-16x16.png',
-        title: '曲名2',
-        publisher: '发布者2',
-        author: '作者2',
-        uploadTime: '2023-10-02',
-        audioUrl: 'path/to/audio2.mp3',
-        type: 2,
-    },
-    {
-        id: 2,
-        coverUrl: '@/assets/favicon-16x16.png',
-        title: '曲名2',
-        publisher: '发布者2',
-        author: '作者2',
-        uploadTime: '2023-10-02',
-        audioUrl: 'path/to/audio2.mp3',
-        type: 2,
-    },
-    {
-        id: 2,
-        coverUrl: '@/assets/favicon-16x16.png',
-        title: '曲名2',
-        publisher: '发布者2',
-        author: '作者2',
-        uploadTime: '2023-10-02',
-        audioUrl: 'path/to/audio2.mp3',
-        type: 2,
-    },
-    {
-        id: 2,
-        coverUrl: '@/assets/favicon-16x16.png',
-        title: '曲名2',
-        publisher: '发布者2',
-        author: '作者2',
-        uploadTime: '2023-10-02',
-        audioUrl: 'path/to/audio2.mp3',
-        type: 2,
-    },
-    {
-        id: 2,
-        coverUrl: '@/assets/favicon-16x16.png',
-        title: '曲名2',
-        publisher: '发布者2',
-        author: '作者2',
-        uploadTime: '2023-10-02',
-        audioUrl: 'path/to/audio2.mp3',
-        type: 2,
-    },
-    {
-        id: 2,
-        coverUrl: '@/assets/favicon-16x16.png',
-        title: '曲名2',
-        publisher: '发布者2',
-        author: '作者2',
-        uploadTime: '2023-10-02',
-        audioUrl: 'path/to/audio2.mp3',
-        type: 2,
-    },
-    {
-        id: 2,
-        coverUrl: '@/assets/favicon-16x16.png',
-        title: '曲名2',
-        publisher: '发布者2',
-        author: '作者2',
-        uploadTime: '2023-10-02',
-        audioUrl: 'path/to/audio2.mp3',
-        type: 2,
-    },
-    {
-        id: 2,
-        coverUrl: '@/assets/favicon-16x16.png',
-        title: '曲名2',
-        publisher: '发布者2',
-        author: '作者2',
-        uploadTime: '2023-10-02',
-        audioUrl: 'path/to/audio2.mp3',
-        type: 2,
-    },
-    {
-        id: 2,
-        coverUrl: '@/assets/favicon-16x16.png',
-        title: '曲名2',
-        publisher: '发布者2',
-        author: '作者2',
-        uploadTime: '2023-10-02',
-        audioUrl: 'path/to/audio2.mp3',
-        type: 2,
-    },
-    {
-        id: 2,
-        coverUrl: '@/assets/favicon-16x16.png',
-        title: '曲名2',
-        publisher: '发布者2',
-        author: '作者2',
-        uploadTime: '2023-10-02',
-        audioUrl: 'path/to/audio2.mp3',
-        type: 2,
-    },
-    {
-        id: 2,
-        coverUrl: '@/assets/favicon-16x16.png',
-        title: '曲名2',
-        publisher: '发布者2',
-        author: '作者2',
-        uploadTime: '2023-10-02',
-        audioUrl: 'path/to/audio2.mp3',
-        type: 2,
-    },
-    {
-        id: 2,
-        coverUrl: '@/assets/favicon-16x16.png',
-        title: '曲名2',
-        publisher: '发布者2',
-        author: '作者2',
-        uploadTime: '2023-10-02',
-        audioUrl: 'path/to/audio2.mp3',
-        type: 2,
-    },
-    {
-        id: 2,
-        coverUrl: '@/assets/favicon-16x16.png',
-        title: '曲名2',
-        publisher: '发布者2',
-        author: '作者2',
-        uploadTime: '2023-10-02',
-        audioUrl: 'path/to/audio2.mp3',
-        type: 2,
-    },
-    {
-        id: 2,
-        coverUrl: '@/assets/favicon-16x16.png',
-        title: '曲名2',
-        publisher: '发布者2',
-        author: '作者2',
-        uploadTime: '2023-10-02',
-        audioUrl: 'path/to/audio2.mp3',
-        type: 2,
-    },
-    // 其他音乐数据...
 ]);
 
 const handleSearch = () => {
     handleQuery();
 };
 
-const toggleStatus = async (row) => {
-    const newStatus = row.status === 1 ? 0 : 1;
-    console.log('toggleStatus', newStatus);
-    // await updateMusicStatusService(row.adminId, newStatus);
-    handleQuery();
-};
-// 处理查询
 const handleQuery = async () => {
     isLoading.value = true;
     // await getMusicListService(pageParams.value);
     isLoading.value = false;
 };
 
-const deleteMusic = async (musicId) => {
-    await ElMessageBox.confirm('确定删除此项？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-    });
-    // await deleteMusicService(musicId);
-    ElMessage.success('删除成功');
-    handleQuery();
+const handleLike = (row) => {
+    row.isLiked = !row.isLiked;
+    if (row.isLiked) {
+        row.likeCount++;
+    } else {
+        row.likeCount--;
+    }
+    // 调用点赞服务
+    // await likeMusicService(row.id, row.isLiked);
 };
 
-// handleQuery();
+const handleCollect = (row) => {
+    row.isCollected = !row.isCollected;
+    if (row.isCollected) {
+        row.collectCount++;
+    } else {
+        row.collectCount--;
+    }
+    // 调用收藏服务
+    // await collectMusicService(row.id, row.isCollected);
+};
+
+const handleReport = (row) => {
+    // 调用举报服务
+    // await reportMusicService(row.id);
+    ElMessage.info('已举报');
+};
+
+const handleAddFriend = (row) => {
+    // 调用添加好友服务
+    // await addFriendService(row.publisherId);
+    ElMessage.info('已发送好友请求');
+};
 </script>
 
 <template>
@@ -247,7 +129,7 @@ const deleteMusic = async (musicId) => {
                     <img
                         :src="scope.row.coverUrl ? scope.row.coverUrl : defaultCoverUrl"
                         alt="封面"
-                        style="width: 50px; height: 50px; object-fit: cover" />
+                        style="width: 40px; height: 40px; object-fit: cover" />
                 </template>
             </el-table-column>
             <el-table-column label="歌名" prop="title">
@@ -280,29 +162,47 @@ const deleteMusic = async (musicId) => {
             </el-table-column>
             <el-table-column label="发布者" prop="publisherId" />
             <el-table-column label="作者" prop="author" />
-            <el-table-column label="上传时间" prop="uploadTime" min-width="150" />
-            <el-table-column label="播放" width="150" align="center"> </el-table-column>
+            <el-table-column label="上传时间" prop="uploadTime" />
+            <el-table-column label="播放" align="center" width="50px" />
+            <el-table-column label="操作" align="center">
+                <template #default="scope">
+                    <ActionButtons
+                        :isLiked="scope.row.isLiked"
+                        :isCollected="scope.row.isCollected"
+                        :likeCount="scope.row.likeCount"
+                        :collectCount="scope.row.collectCount"
+                        :row="scope.row"
+                        @like="handleLike"
+                        @collect="handleCollect"
+                        @report="handleReport"
+                        @addFriend="handleAddFriend" />
+                </template>
+            </el-table-column>
             <template #empty>
                 <el-empty description="暂无数据" />
             </template>
         </el-table>
 
-        <div class="pagination">
-            <el-pagination
-                v-model:current-page="pageParams.page"
-                v-model:page-size="pageParams.pageSize"
-                :page-sizes="[10, 20, 30, 40]"
-                layout="total, sizes, prev, pager, next, jumper"
-                v-model:total="total"
-                @size-change="handleQuery"
-                @current-change="handleQuery" />
-        </div>
+        <CustomPagination
+            :total="total"
+            :page="pageParams.page"
+            :pageSize="pageParams.pageSize"
+            @update:page="pageParams.page = $event"
+            @update:pageSize="pageParams.pageSize = $event"
+            @query="handleQuery" />
     </page-container>
 </template>
 
 <style lang="scss" scoped>
 .music-list-view {
     background-image: url('@/assets/BG.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #3b40a0; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     .header {
         width: 100%;
         display: flex;
@@ -320,7 +220,7 @@ const deleteMusic = async (musicId) => {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                padding-bottom: 1px ;
+                padding-bottom: 1px;
                 width: 60px;
             }
             .search-input {
@@ -332,15 +232,12 @@ const deleteMusic = async (musicId) => {
             }
         }
         .button-upload {
-            flex: 1;
-            margin-left: 10%;
+            flex: 0;
+            margin-right: 1;
         }
     }
     .music-list {
         font-size: 12px;
-        .el-table-column {
-            color: #b0b4b9;
-        }
 
         .el-tag {
             padding-left: 2px;
@@ -348,16 +245,28 @@ const deleteMusic = async (musicId) => {
             margin-left: 2px;
             font-size: 10px;
         }
-        
+
+        .el-button.text {
+            color: #b0b4b9;
+            &.liked {
+                color: red;
+            }
+            &.collected {
+                color: gold;
+            }
+        }
+    }
+    .operate-button {
+        display: flex;
+        width: auto;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        border: 1px solid red; /* 添加边框以便观察容器大小 */
     }
 
-
-    .pagination {
-        margin-top: 10px;
-        text-align: center;
-        .el-pagination {
-            background-color: rgb(51, 135, 220);
-        }
+    .operate-button > * {
+        border: 1px solid blue; /* 添加边框以便观察子组件大小 */
     }
 }
 </style>

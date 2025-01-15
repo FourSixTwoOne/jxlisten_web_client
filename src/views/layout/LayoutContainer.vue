@@ -163,7 +163,7 @@ const closeProfile = () => {
                 background-color: rgb(98, 148, 186);
                 margin-right: 10px;
             }
-
+            
             .container {
                 display: flex;
                 flex-direction: column;
@@ -265,7 +265,6 @@ const closeProfile = () => {
                 flex: 1;
                 border-left: 2px solid #403593;
                 overflow-y: auto;
-                overflow-x: hidden;
                 &.shrink {
                     flex: 0 0 calc(95% - 260px);
                 }
