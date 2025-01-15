@@ -1,249 +1,143 @@
 <script setup>
 import { ref } from 'vue';
-// import { updateUserService } from '@/api/user'; // 假设这是更新用户信息的接口
-const form = ref();
-const imageUrl = ref('');
-const imageFile = ref('');
-
-const user = ref({
-    image: '@/assets/avatar.png', // 替换为实际头像路径
-    username: '小明',
-    gender: '男',
+import defaultAvatar from '@/assets/default.png';
+import { EditPen, Upload } from '@element-plus/icons-vue';
+const userInfo = ref({
+    avatar: '', // 用户头像
+    username: '用户名',
+    gender: 'male',
     age: 25,
-    bio: '喜欢听音乐，热爱生活。',
-    favoriteSongs: [
-        { id: 1, title: '歌曲1', artist: '歌手1' },
-        { id: 2, title: '歌曲2', artist: '歌手2' },
-    ],
-    friends: [
-        { id: 1, username: '好友1', image: '@/assets/friend1.png' },
-        { id: 2, username: '好友2', image: '@/assets/friend2.png' },
-    ],
-    listenHistory: [
-        { id: 1, songTitle: '历史歌曲1', date: '2025-01-01' },
-        { id: 2, songTitle: '历史歌曲2', date: '2025-01-02' },
-    ],
+    bio: '这是个人简介这是个人简简介',
 });
+const emit = defineEmits(['favorites', 'friends', 'records']);
+const isEditing = ref(false);
 
-const formModel = ref({ ...user.value });
-const rules = {
-    username: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
-    gender: [{ required: true, message: '请选择性别', trigger: 'change' }],
-    age: [{ required: true, message: '请输入年龄', trigger: 'blur' }],
-    bio: [{ required: true, message: '请输入个人简介', trigger: 'blur' }],
+// 切换编辑状态
+const editProfile = () => {
+    isEditing.value = true;
 };
 
-const changeImage = (uploadFile) => {
-    imageUrl.value = URL.createObjectURL(uploadFile.raw);
-    imageFile.value = uploadFile.raw;
+// 提交修改
+const submitProfile = () => {
+    // 在这里可以添加提交逻辑，例如 API 调用
+    isEditing.value = false;
 };
 
-const updateUser = async () => {
-    await form.value.validate();
-    // const res = await updateUserService(formModel.value);
-    // if (res.data.code === 1) {
-    Object.assign(user.value, formModel.value); // 更新用户信息
-    ElMessage.success('信息更新成功');
-    // } else {
-    //     ElMessage.error(res.data.msg);
-    // }
+// 处理好友列表、收藏歌曲和历史记录的点击事件
+const handleAction = (action) => {
+    emit('action-selected', action);
 };
 
-const beforeAvatarUpload = (file) => {
-    const isJPG = file.type === 'image/jpeg';
-    const isPNG = file.type === 'image/png';
-    const isGIF = file.type === 'image/gif';
-    const isImage = isJPG || isPNG || isGIF;
-    if (!isImage) {
-        ElMessage.error('上传头像只能是 JPG、PNG 或 GIF 格式!');
-    }
-    return isImage;
+const buttonProps = {
+    color: '#a0a20a',
+    size: 'small',
+    type: 'info',
+    plain: true,
 };
 
-const selectFriend = (friend) => {  
-    // 处理好友选择逻辑  
-    console.log('Selected friend:', friend);  
-};  
-
-const selectSong = (song) => {  
-    // 处理歌曲选择逻辑  
-    console.log('Selected song:', song);  
-};  
-
-const selectRecord = (record) => {  
-    // 处理听歌记录选择逻辑  
-    console.log('Selected record:', record);  
-};  
-
-const handleTabClick = (tab) => {
-    console.log(`Clicked on tab: ${tab.label}`);
-};
 </script>
-<template>  
-    <div class="profile-container">  
-        <el-card class="profile-header">  
-            <div class="header-content">  
-                <el-form-item label="头像" prop="image">  
-                    <el-upload  
-                        auto-upload="false"  
-                        class="avatar-uploader"  
-                        show-file-list="false"  
-                        :before-upload="beforeAvatarUpload"  
-                        :on-change="changeImage">  
-                        <img v-if="imageUrl" :src="imageUrl" class="avatar" />  
-                        <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>  
-                    </el-upload>  
-                </el-form-item>  
-                <div class="user-info">  
-                    <el-form :model="formModel" :rules="rules" ref="form" label-position="top">  
-                        <el-form-item label="昵称" prop="username">  
-                            <el-input  
-                                v-model="formModel.username"  
-                                placeholder="请输入昵称"></el-input>  
-                        </el-form-item>  
-                        <el-form-item label="性别" prop="gender">  
-                            <el-select v-model="formModel.gender" placeholder="请选择性别">  
-                                <el-option label="男" value="男"></el-option>  
-                                <el-option label="女" value="女"></el-option>  
-                                <el-option label="其他" value="其他"></el-option>  
-                            </el-select>  
-                        </el-form-item>  
-                        <el-form-item label="年龄" prop="age">  
-                            <el-input-number  
-                                v-model="formModel.age"  
-                                :min="1"  
-                                :max="150"  
-                                placeholder="请输入年龄"></el-input-number>  
-                        </el-form-item>  
-                    </el-form>  
-                </div>  
-            </div>  
-        </el-card>  
 
-        <el-form-item label="个性签名" prop="bio" class="bio-item">  
-            <el-input  
-                type="textarea"  
-                v-model="formModel.bio"  
-                placeholder="请输入个人简介"></el-input>  
-        </el-form-item>  
+<template>
+    <div class="profile-page">
+        <div class="profile-header">
+            <div class="avatar-container">
+                <img :src="userInfo.avatar || defaultAvatar" alt="用户头像" class="avatar" />
+            </div>
+            <div class="user-info">
+                <p>用户：{{ userInfo.username }}</p>
+                <p>性别: {{ userInfo.gender }}</p>
+                <p>年龄: {{ userInfo.age }}</p>
+                <div v-if="isEditing">
+                    <el-input v-model="userInfo.username" placeholder="输入用户名" />
+                    <el-select v-model="userInfo.gender" placeholder="选择性别">
+                        <el-option label="男" value="male" />
+                        <el-option label="女" value="female" />
+                    </el-select>
+                    <el-input v-model="userInfo.age" type="number" placeholder="输入年龄" />
+                </div>
+            </div>
+        </div>
 
-        <el-tabs model-value="activeTab" @tab-click="handleTabClick">  
-            <el-tab-pane label="好友列表" name="friends">  
-                <ul class="friend-list">  
-                    <li v-for="friend in user.friends" :key="friend.id" class="friend-item" @click="selectFriend(friend)">  
-                        <img :src="friend.image" alt="好友头像" class="friend-avatar" />  
-                        <span>{{ friend.username }}</span>  
-                    </li>  
-                </ul>  
-            </el-tab-pane>  
-            <el-tab-pane label="收藏歌曲" name="favorites">  
-                <ul class="song-list">  
-                    <li v-for="song in user.favoriteSongs" :key="song.id" class="song-item" @click="selectSong(song)">  
-                        <el-tooltip :content="song.artist" placement="top">  
-                            <span>{{ song.title }}</span>  
-                        </el-tooltip>  
-                    </li>  
-                </ul>  
-            </el-tab-pane>  
-            <el-tab-pane label="听歌记录" name="history">  
-                <ul class="history-list">  
-                    <li v-for="record in user.listenHistory" :key="record.id" class="history-item" @click="selectRecord(record)">  
-                        <span>{{ record.songTitle }}</span> - <span>{{ record.date }}</span>  
-                    </li>  
-                </ul>  
-            </el-tab-pane>  
-        </el-tabs>  
-    </div>  
-</template>  
+        <div class="bio-container" v-if="!isEditing">
+            <h3>个人简介：</h3>
+            <el-input
+                class="transparent-input"
+                :rows="2"
+                type="textarea"
+                :autosize="{ minRows: 1, maxRows: 3 }"
+                maxlength="50"
+                show-word-limit
+                v-model="userInfo.bio"
+                placeholder="暂无个人简介" />
+        </div>
+        <div v-if="isEditing">
+            <el-input type="textarea" v-model="userInfo.bio" placeholder="输入个人简介" />
+        </div>
+        <div class="edit-button">
+            <el-button v-if="isEditing" type="primary" plain @click="editProfile" text>
+                点击进行修改<el-icon><EditPen /></el-icon
+            ></el-button>
+            <el-button v-if="!isEditing" type="warning" plain @click="submitProfile" text
+                >点击进行提交 <el-icon><Upload /></el-icon>
+            </el-button>
+        </div>
+        <div class="friends-actions">
+            <el-button v-bind="buttonProps" @click="handleAction('friends')">好友列表</el-button>
+            <el-button  v-bind="buttonProps" @click="handleAction('favorites')">收藏歌曲</el-button>
+            <el-button  v-bind="buttonProps" plain @click="handleAction('history')">历史记录</el-button>
+        </div>
+    </div>
+</template>
 
-<style lang="scss" scoped>  
-.profile-container {  
-    max-width: 800px;  
-    margin: 0 auto;  
-    padding: 20px;  
+<style lang="scss" scoped>
+.profile-page {
+    height: 95%;
+    font-size: small;
+    color: #118c98;
+    border: 4px solid #0b144a;
+    border-radius: 8px;
+    padding: 2px;
+    background-image: url('@/assets/BG.jpg');
+    background-size: cover;
+    background-position: center;
+}
 
-    .profile-header {  
-        margin-bottom: 20px;  
+.profile-header {
+    display: flex;
+    align-items: center;
+}
 
-        .header-content {  
-            display: flex;  
-            align-items: center;  
+.avatar-container {
+    position: relative;
+    margin-right: 5%;
+}
 
-            .avatar-uploader {  
-                margin-right: 20px;  
-                cursor: pointer;  
+.bio-container {
+    margin-bottom: 5px;
+    .transparent-input {
+        opacity: 0.8;
+    }
+}
+.avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+}
 
-                .el-upload {  
-                    border: 2px dashed #d9d9d9;  
-                    border-radius: 50%;  
-                    width: 100px;  
-                    height: 100px;  
-                    display: flex;  
-                    justify-content: center;  
-                    align-items: center;  
-                    background-color: #f9f9f9;  
-                    transition: border-color 0.3s;  
+.edit-button {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+}
 
-                    &:hover {  
-                        border-color: #409eff;  
-                    }  
+.user-info {
+    flex-grow: 1;
+}
 
-                    img {  
-                        border-radius: 50%;  
-                        width: 100%;  
-                        height: 100%;  
-                        object-fit: cover;  
-                    }  
-                }  
-            }  
-
-            .user-info {  
-                flex-grow: 1;  
-                .el-form {  
-                    margin-bottom: 0;  
-                }  
-            }  
-        }  
-    }  
-
-    .bio-item {  
-        margin-bottom: 20px;  
-    }  
-
-    .friend-list,  
-    .song-list,  
-    .history-list {  
-        list-style-type: none;  
-        padding: 0;  
-        margin: 0;  
-
-        .friend-item,  
-        .song-item,  
-        .history-item {  
-            padding: 10px;  
-            border: 1px solid #ddd;  
-            border-radius: 5px;  
-            margin-bottom: 5px;  
-            background-color: #fff;  
-            transition: background-color 0.3s;  
-
-            &:hover {  
-                background-color: #f0f0f0;  
-            }  
-        }  
-
-        .friend-item {  
-            display: flex;  
-            align-items: center;  
-
-            .friend-avatar {  
-                width: 40px;  
-                height: 40px;  
-                border-radius: 50%;  
-                margin-right: 10px;  
-                object-fit: cover;  
-            }  
-        }  
-    }  
-}  
+.friends-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+}
 </style>

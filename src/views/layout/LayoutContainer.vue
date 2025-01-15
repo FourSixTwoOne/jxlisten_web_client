@@ -137,7 +137,7 @@ const closeProfile = () => {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    background-image: url('@/assets/login_bg.jpg');
+    background-image: url('@/assets/BG.jpg');
     background-size: cover;
     background-position: center;
 
@@ -160,7 +160,7 @@ const closeProfile = () => {
             .vertical-line {
                 width: 5px;
                 height: 35px;
-                background-color: rgb(12, 109, 124);
+                background-color: rgb(98, 148, 186);
                 margin-right: 10px;
             }
 
@@ -263,17 +263,17 @@ const closeProfile = () => {
 
             .right-column {
                 flex: 1;
-                border-left: 2px solid #17cae1;
+                border-left: 2px solid #403593;
                 overflow-y: auto;
-                overflow-x: auto;
+                overflow-x: hidden;
                 &.shrink {
-                    flex: 0 0 calc(95% - 300px);
+                    flex: 0 0 calc(95% - 260px);
                 }
             }
 
             .profile {
-                width: 300px;
-                background-color: rgb(76, 134, 178);
+                width: 260px;
+                background-color: rgb(4, 36, 60);
                 overflow-y: auto;
             }
         }
@@ -283,8 +283,8 @@ const closeProfile = () => {
             flex: 1;
             width: 100%;
             height: 50%;
-            border-top: 4px solid #17cae1;
-            border-bottom: 4px solid #17cae1;
+            border-top: 4px solid #403593;
+            border-bottom: 4px solid #403593;
         }
     }
 
