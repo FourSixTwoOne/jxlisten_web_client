@@ -195,11 +195,12 @@ const handleAddFriend = (row) => {
 
 <style lang="scss" scoped>
 .music-list-view {
+    $bg: #9ac3e8;
     background-image: url('@/assets/BG.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    background-color: #3b40a0; 
+    background-color: $bg; 
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -238,6 +239,7 @@ const handleAddFriend = (row) => {
     }
     .music-list {
         font-size: 12px;
+        width: 100%;
 
         .el-tag {
             padding-left: 2px;
@@ -255,18 +257,12 @@ const handleAddFriend = (row) => {
                 color: gold;
             }
         }
+        :deep(.el-table__cell){
+            padding: 0;
+            margin: 0;
+            background-color: $bg;
+        }
     }
-    .operate-button {
-        display: flex;
-        width: auto;
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-        border: 1px solid red; /* 添加边框以便观察容器大小 */
-    }
-
-    .operate-button > * {
-        border: 1px solid blue; /* 添加边框以便观察子组件大小 */
-    }
+    
 }
 </style>

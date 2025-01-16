@@ -17,5 +17,12 @@ export const getUserService = () => request.get('/user/user/info');
 export const updateUserStatusService = (userId, status) =>
     request.put(`/user/user/status/${userId}?status=${status}`);
 
+// 更新用户
+export const updateUserService = (userId, username, bio) =>
+    request.put(`/user/user/update/${userId}`, { username, bio });
+
 // 删除用户
 export const deleteUserService = (userId) => request.delete(`/user/user/delete/${userId}`);
+
+//上传文件
+export const uploadFileService = (file) => request.post('/user/user/upload', file);

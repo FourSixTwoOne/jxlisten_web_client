@@ -26,7 +26,7 @@ defineProps({
 
     .header {
         display: flex;
-        height: 10%;
+        height: 30px;
         width: 100%;
         flex-direction: row;
         align-items: center;
