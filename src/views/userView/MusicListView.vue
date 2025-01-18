@@ -3,9 +3,87 @@ import { ref } from 'vue';
 import { Search, Upload } from '@element-plus/icons-vue';
 import defaultCoverUrl from '@/assets/apple-touch-icon.png';
 import CustomPagination from '@/components/CustomPagination.vue';
+import CUploader from '@/components/CUploader.vue';
+import { uploadFileService } from '@/api/user';
+import { uploadMusicService } from '@/api/music';
 
 const isLoading = ref(false);
 const total = ref(2);
+const dialog = ref(false);
+const coverFile = ref(null);
+const musicFile = ref(null);
+
+const form = ref({
+    title: '',
+    author: '',
+    type: '', // 1: 原创, 2: 翻唱, 3: 转载
+    audioUrl: '',
+    coverUrl: '',
+});
+
+// 取消表单
+const cancelForm = () => {
+    // 重置表单
+    form.value = {
+        title: '',
+        author: '',
+        type: '',
+        audioUrl: '',
+        coverUrl: '',
+    };
+    dialog.value = false;
+};
+
+// 处理关闭
+const handleClose = () => {
+    cancelForm();
+};
+
+// 上传封面成功的回调
+const handleCoverSuccess = (file) => {
+    form.value.coverUrl = response.url; // 假设上传成功后返回对象中有url字段
+};
+
+// 上传音频成功的回调
+const handleAudioSuccess = (response, file) => {
+    form.value.audioUrl = response.url; // 假设上传成功后返回对象中有url字段
+};
+
+// 上传之前的检查
+const beforeCoverUpload = (file) => {
+    // 可以在这里添加文件类型和大小的检查
+    return true;
+};
+
+const beforeAudioUpload = (file) => {
+    // 可以在这里添加文件类型和大小的检查
+    return true;
+};
+
+const onClick = async () => {
+    isLoading.value = true;
+    try {
+        // 上传封面
+        const coverFormData = new FormData();
+        coverFormData.append('file', coverFile.value);
+        const coverResponse = await uploadFileService(coverFormData);
+        form.value.coverUrl = coverResponse.data.data.url;
+
+        // 上传音频
+        const audioFormData = new FormData();
+        audioFormData.append('file', musicFile.value);
+        const audioResponse = await uploadFileService(audioFormData);
+        form.value.audioUrl = audioResponse.data.data.url;
+
+        // 调用update
+        uploadMusicService(form.value);
+
+    } catch (error) {
+        console.error('上传失败:', error);
+    }finally {
+        isLoading.value = false;
+    }
+};
 
 const pageParams = ref({
     page: 1,
@@ -23,7 +101,7 @@ const musicList = ref([
         publisher: '发布者1',
         author: '作者1',
         uploadTime: '2023-10-01',
-        audioUrl: 'path/to/audio1.mp3',
+        audioUrl: 'http://localhost:5173/src/assets/music/%E5%B0%8F%E5%9F%8E%E8%B0%A3%20-%20Vk.mp3',
         type: 1, // 1: 原创, 2: 翻唱, 3: 转载
         likeCount: 0,
         collectCount: 0,
@@ -37,7 +115,7 @@ const musicList = ref([
         publisher: '发布者2',
         author: '作者2',
         uploadTime: '2023-10-02',
-        audioUrl: 'path/to/audio2.mp3',
+        audioUrl: 'http://localhost:5173/src/assets/music/%E5%B0%8F%E5%9F%8E%E8%B0%A3%20-%20Vk.mp3',
         type: 2, // 2: 翻唱
         likeCount: 0,
         collectCount: 0,
@@ -113,16 +191,54 @@ const handleAddFriend = (row) => {
                         v-model="pageParams.author"
                         style="width: 60px; margin-right: 4px; height: 20px" />
                 </div>
-                <el-button
-                    size="small"
-                    type="primary"
-                    @click="handleUploadMusic"
-                    class="button-upload">
+                <el-button size="small" type="primary" @click="dialog = true" class="button-upload">
                     上传歌曲<el-icon class="el-icon--right"><Upload /></el-icon>
                 </el-button>
             </div>
         </template>
+        <el-drawer
+            v-model="dialog"
+            title="上传歌曲"
+            :before-close="handleClose"
+            direction="ltr"
+            class="demo-drawer">
+            <div class="demo-drawer__content">
+                <el-form :model="form">
+                    <el-form-item label="标题" :label-width="formLabelWidth">
+                        <el-input v-model="form.title" autocomplete="off" />
+                    </el-form-item>
+                    <el-form-item label="原唱" :label-width="formLabelWidth">
+                        <el-input v-model="form.author" autocomplete="off" />
+                    </el-form-item>
+                    <el-form-item label="类型" :label-width="formLabelWidth">
+                        <el-select v-model="form.type" placeholder="请选择歌曲类型">
+                            <el-option label="原创" :value="1" />
+                            <el-option label="翻唱" :value="2" />
+                            <el-option label="转载" :value="3" />
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="上传封面" :label-width="formLabelWidth">
+                        <CUploader
+                            placeholder="请上传封面图片"
+                            type="image"
+                            @file-selected="coverFile = $event" />
+                    </el-form-item>
+                    <el-form-item label="上传音频" :label-width="formLabelWidth">
+                        <CUploader
+                            placeholder="请上传音频文件"
+                            type="audio"
+                            @file-selected="musicFile = $event" />
+                    </el-form-item>
 
+                    <div class="demo-drawer__footer">
+                        <el-button @click="cancelForm">取消</el-button>
+                        <el-button type="primary" :loading="isLoading" @click="onClick">
+                            {{ loading ? '提交中...' : '提交' }}
+                        </el-button>
+                    </div>
+                </el-form>
+            </div>
+        </el-drawer>
         <el-table class="music-list" :data="musicList" v-loading="isLoading" fit>
             <el-table-column label="封面" align="center">
                 <template #default="scope">
@@ -163,7 +279,11 @@ const handleAddFriend = (row) => {
             <el-table-column label="发布者" prop="publisherId" />
             <el-table-column label="作者" prop="author" />
             <el-table-column label="上传时间" prop="uploadTime" />
-            <el-table-column label="播放" align="center" width="50px" />
+            <el-table-column label="播放" align="center" width="auto">
+                <template #default="scope">
+                    <MusicPlayerIcon :audioUrl="scope.row.audioUrl"></MusicPlayerIcon>
+                </template>
+            </el-table-column>
             <el-table-column label="操作" align="center">
                 <template #default="scope">
                     <ActionButtons
@@ -200,7 +320,7 @@ const handleAddFriend = (row) => {
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    background-color: $bg; 
+    background-color: $bg;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -242,9 +362,10 @@ const handleAddFriend = (row) => {
         width: 100%;
 
         .el-tag {
-            padding-left: 2px;
-            padding-right: 2px;
-            margin-left: 2px;
+            height: 15px;
+            width: 15px;
+            padding: 1px;
+            margin-bottom: 3px;
             font-size: 10px;
         }
 
@@ -257,12 +378,14 @@ const handleAddFriend = (row) => {
                 color: gold;
             }
         }
-        :deep(.el-table__cell){
+        :deep(.el-table__cell) {
             padding: 0;
             margin: 0;
             background-color: $bg;
         }
     }
-    
+    demo-drawer__content {
+        padding: 20px;
+    }
 }
 </style>

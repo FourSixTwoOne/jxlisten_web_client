@@ -1,51 +1,46 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useUserStore } from '@/stores';
-import { uploadFileService,updateUserService } from '@/api/user.js';
+import { uploadFileService, updateUserService } from '@/api/user.js';
 import defaultAvatar from '@/assets/default.png';
-import { EditPen, Upload, Plus } from '@element-plus/icons-vue';
+import { EditPen, Upload, InfoFilled } from '@element-plus/icons-vue';
+
 const userInfo = ref({
-    image: '', // 用户头像
-    username: '用户名',
+    username: '',
+    image: '',
     gender: 0,
-    age: 25,
-    bio: '这是个人简介这是个人简简介',
+    age: 0,
+    bio: '',
 });
+
 const emit = defineEmits(['favorites', 'friends', 'records']);
 const userStore = useUserStore();
 const isEditing = ref(false);
-const imageUrl = ref('');
 const imageFile = ref(null);
-
-const changeImage = (uploadFile) => {
-    imageUrl.value = URL.createObjectURL(uploadFile.raw);
-    imageFile.value = uploadFile.raw;
-};
-
-const beforeAvatarUpload = (file) => {
-    const isImage = file.type.startsWith('image/'); // 检查文件类型是否为图片
-    const isLt2M = file.size / 1024 / 1024 < 2; // 检查文件大小是否小于2MB
-
-    if (!isImage) {
-        this.$message.error('已选择文件不是图片！');
-    }
-    if (!isLt2M) {
-        this.$message.error('上传头像图片大小不能超过 2MB!');
-    }
-    return isImage && isLt2M; // 检查通过则进行上传
-};
+const isLoading = ref(false); // 添加加载状态
 
 // 切换编辑状态
 const editProfile = () => {
     isEditing.value = true;
 };
 
+const cancelEvent = () => {
+    ElMessage.warning('取消修改');
+};
+
 // 提交修改
 const submitProfile = async () => {
-    userInfo.value.image = await uploadFileService(imageFile.value);
-    await updateUserService(userInfo.value);
-    getUser;
-    isEditing.value = false;
+    isLoading.value = true; // 开始加载
+    try {
+        userInfo.value.image = await uploadFileService(imageFile.value);
+        await updateUserService(userInfo.value);
+        await getUser();
+        isEditing.value = false;
+    } catch (error) {
+        console.error('提交用户信息失败:', error);
+    } finally {
+        isLoading.value = false; // 结束加载
+    }
 };
 
 // 处理好友列表、收藏歌曲和历史记录的点击事件
@@ -61,34 +56,31 @@ const buttonProps = {
 };
 
 const getUser = async () => {
-    const res = await userStore.getUser();
-    userInfo.value = res.data;
+    await userStore.getUser(); 
+     userInfo.value = await userStore.user ; 
+    console.log('用户信息：userInfo.value',  userInfo.value);
+    console.log('用户信息：userStore.user.value', userStore.user);
 };
-getUser;
+
+onMounted(() => {
+    getUser();
+});
 </script>
 
 <template>
     <div class="profile-page">
         <div v-if="!isEditing" class="profile-header">
             <div class="avatar-container">
-                <img :src="userInfo.image || defaultAvatar" alt="用户头像" class="avatar" />
+                <img :src="userInfo?.image || defaultAvatar" alt="用户头像" class="avatar" />
             </div>
             <div class="user-info">
                 <p>用户：{{ userInfo.username }}</p>
-                <p>性别: {{ userInfo.gender === 0 ? '男' : '女' }}</p>
+                <p>性别: {{ userInfo.gender === 0 ? '男' : userInfo.gender === 1 ? '女' : '未选择' }}</p>
                 <p>年龄: {{ userInfo.age }}</p>
             </div>
         </div>
         <div v-if="isEditing" class="profile-header">
-            <el-upload
-                auto-upload="false"
-                class="avatar-uploader"
-                :before-upload="beforeAvatarUpload"
-                :on-change="changeImage">
-                <img v-if="imageUrl" :src="imageUrl" class="avatar" />
-                <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
-            </el-upload>
-
+            <CUploader placeholder="请上传头像" type="image" @file-selected="imageFile = $event" />
             <div class="user-info-input">
                 <div class="input-with-label">
                     <span class="label">用户名：</span>
@@ -100,9 +92,9 @@ getUser;
                 <div class="input-with-label">
                     <span class="label">性别：</span>
                     <el-select size="small" v-model="userInfo.gender" placeholder="性别">
-                        <el-option label="未选择" value="0"></el-option>
-                        <el-option label="男" value="1"></el-option>
-                        <el-option label="女" value="2"></el-option>
+                        <el-option label="未选择" value="2"></el-option>
+                        <el-option label="男" value="0"></el-option>
+                        <el-option label="女" value="1"></el-option>
                     </el-select>
                 </div>
                 <div class="input-with-label">
@@ -135,9 +127,20 @@ getUser;
             <el-button v-if="!isEditing" type="primary" plain @click="editProfile" text>
                 点击进行修改<el-icon><EditPen /></el-icon
             ></el-button>
-            <el-button v-if="isEditing" type="warning" plain @click="submitProfile" text
-                >点击进行提交 <el-icon><Upload /></el-icon>
-            </el-button>
+            <el-popconfirm
+                confirm-button-text="是"
+                cancel-button-text="否"
+                :icon="InfoFilled"
+                icon-color="#626AEF"
+                title="已确认信息无误并提交"
+                @confirm="submitProfile"
+                @cancel="cancelEvent">
+                <template #reference>
+                    <el-button v-if="isEditing" type="warning" plain text :loading="isLoading">
+                        点击进行提交 <el-icon><Upload /></el-icon>
+                    </el-button>
+                </template>
+            </el-popconfirm>
         </div>
         <div class="actions">
             <el-button v-bind="buttonProps" @click="handleAction('friends')">好友列表</el-button>
@@ -178,28 +181,11 @@ getUser;
         opacity: 0.8;
     }
 }
-.avatar-uploader {
-    border: 1px dashed #7d7070;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 0 4px;
-}
 
 .avatar {
     width: 70px;
     height: 70px;
     object-fit: cover;
-}
-
-.avatar-uploader-icon {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 28px;
-    color: #8c939d;
 }
 
 .edit-button {

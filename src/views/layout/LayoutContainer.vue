@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useUserStore } from '@/stores';
 import ProfilePage from '@/views/userView/ProfilePage.vue'; // 个人主页组件
 import logo from '@/assets/logo-192x192.png'; // 应用 logo
@@ -7,11 +7,18 @@ import nameLogo from '@/assets/juexianlisten.png'; // 应用名称 logo
 import defaultAvatar from '@/assets/default.png';
 import { Headset, HomeFilled } from '@element-plus/icons-vue';
 import DownContainer from '@/views/component/DownContainer.vue';
+import router from '@/router';
 
 const userStore = useUserStore();
-const user = ref(userStore.user);
 const isProfileVisible = ref(false);
+const downView = ref('music'); // music:'音乐', room:'音乐室', friend:'好友列表'，collect:'我的收藏', record:'浏览记录', upload:'我的上传'
 
+// 计算属性获取用户信息
+const user = computed(() => userStore.user);
+
+onMounted(() => {
+    user.value = userStore.user.value;
+});
 // 播放音乐的函数
 const playMusic = (track) => {
     console.log(`播放音乐: ${track.title}`);
@@ -29,7 +36,9 @@ const toggleProfile = () => {
 
 // 登出函数
 const logout = () => {
-    userStore.logout(); // 处理登出逻辑
+    userStore.removeToken();
+    userStore.setUser(null);
+    router.push('/login');
 };
 
 // 关闭个人主页
@@ -52,7 +61,7 @@ const closeProfile = () => {
                     <div class="user-info">
                         <span v-if="!user">加载中...</span>
                         <span v-else
-                            ><strong>{{ user?.name || '未知用户' }}</strong></span
+                            ><strong>{{ user?.username || '未知用户' }}</strong></span
                         >
                     </div>
                     <el-avatar
@@ -111,7 +120,7 @@ const closeProfile = () => {
                             </el-menu>
                         </div>
                         <div class="right-column" :class="{ shrink: isProfileVisible }">
-                                <router-view />
+                            <router-view />
                         </div>
                         <div
                             class="profile"
@@ -163,7 +172,7 @@ const closeProfile = () => {
                 background-color: rgb(98, 148, 186);
                 margin-right: 10px;
             }
-            
+
             .container {
                 display: flex;
                 flex-direction: column;

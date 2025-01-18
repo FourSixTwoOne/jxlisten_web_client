@@ -1,8 +1,8 @@
 <script setup>
 import { defineProps, defineEmits } from 'vue';
 import { Star, WarnTriangleFilled } from '@element-plus/icons-vue';
-import BxLike from '@/components/icons/BxLikeIcon.vue';
-import AddIcon from '@/components/icons/AddIcon.vue';
+import BxLike from '@/components/icons/BxLikeSVG.vue';
+import AddIcon from '@/components/icons/AddSVG.vue';
 const props = defineProps({
     isLiked: {
         type: Boolean,
@@ -67,7 +67,7 @@ const handleAddFriend = () => {
             </el-button>
         </el-tooltip>
 
-        <el-tooltip content="举报" placement="top">
+        <el-tooltip content="举报" placement="top" >
             <el-button
                 size="small"
                 type="link"
@@ -77,7 +77,7 @@ const handleAddFriend = () => {
             </el-button>
         </el-tooltip>
 
-        <el-tooltip content="添加好友/加入聊天室" placement="top">
+        <el-tooltip  content="添加好友/加入聊天室" placement="top">
             <el-button type="link" :icon="AddIcon" @click="handleAddFriend" class="add-or-jion">
             </el-button>
         </el-tooltip>
@@ -86,7 +86,7 @@ const handleAddFriend = () => {
 
 <style scoped>
 .button-group {
-    width: 90px;
+    width: anto;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -113,5 +113,6 @@ const handleAddFriend = () => {
     width: 24px;
     padding: 0;
     margin: 0;
+    margin-left: 2px;
 }
 </style>

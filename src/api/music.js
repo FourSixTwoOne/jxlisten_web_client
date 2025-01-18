@@ -10,3 +10,8 @@ export const updateMusicStatusService = (musicId, status) =>
 
 // 删除歌曲
 export const deleteMusicService = (musicId) => request.delete(`/user/music/delete/${musicId}`);
+
+// export const uploadMusicService = (title,type,author,audioUrl,coverUrl) => request.post('/user/music/upload', file);
+export const uploadMusicService = (title,type,author,audioUrl,coverUrl) => {
+    console.log('uploadMusicService called with:', title,type,author,audioUrl,coverUrl);
+};

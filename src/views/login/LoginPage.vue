@@ -77,17 +77,19 @@ const register = async () => {
 const login = async () => {
     await form.value.validate();
     const res = await loginUserService(formModel.value);
-    console.log(res);
     // if (res.data.code === 1) {
     //     userStore.setToken(res.data.data.token);
-        ElMessage.success('登录成功');
-        userStore.setToken('1234w')
-        router.push('/');
+    ElMessage.success('登录成功');
+    userStore.setToken('1234w');
+    await userStore.getUser();
+
+    router.push('/');
     // } else {
     //     ElMessage.error(res.data.msg);
     // }
 };
 </script>
+
 <template>
     <el-row class="login-page">
         <el-col :span="12" class="bg"></el-col>
@@ -130,7 +132,11 @@ const login = async () => {
                             placeholder="请再次输入密码"></el-input>
                     </el-form-item>
                     <el-form-item>
-                        <el-button class="button" type="primary" auto-insert-space @click="register">
+                        <el-button
+                            class="button"
+                            type="primary"
+                            auto-insert-space
+                            @click="register">
                             注册
                         </el-button>
                     </el-form-item>

@@ -48,10 +48,12 @@ const router = createRouter({
             ],
         },
         {
-            path: '/music_list',
-            component: () => import('@/views/userView/MusicListView.vue'),
+            path: '/test',
+            component: () => import('@/views/TestView.vue'),
         },
+
     ],
+
 });
 
 router.beforeEach((to) => {
