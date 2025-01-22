@@ -6,6 +6,7 @@ import defaultAvatar from '@/assets/default.png';
 import { EditPen, Upload, InfoFilled } from '@element-plus/icons-vue';
 
 const userInfo = ref({
+    id: '',
     username: '',
     image: '',
     gender: 0,
@@ -13,12 +14,13 @@ const userInfo = ref({
     bio: '',
 });
 
-const emit = defineEmits(['favorites', 'friends', 'records']);
+const emit = defineEmits(['action-selected']);
 const userStore = useUserStore();
 const isEditing = ref(false);
 const imageFile = ref(null);
 const isLoading = ref(false); // 添加加载状态
 
+const isFriendsVisible = ref(false);
 // 切换编辑状态
 const editProfile = () => {
     isEditing.value = true;
@@ -32,18 +34,29 @@ const cancelEvent = () => {
 const submitProfile = async () => {
     isLoading.value = true; // 开始加载
     try {
-        userInfo.value.image = await uploadFileService(imageFile.value);
+        if (imageFile.value) {
+            const formData = new FormData();
+            formData.append('file', imageFile.value);
+            const res = await uploadFileService(formData);
+            userInfo.value.image = res.data.data;
+        }
+        userInfo.value.id = userStore.user.id;
         await updateUserService(userInfo.value);
         await getUser();
         isEditing.value = false;
+        ElMessage.success('修改成功');
     } catch (error) {
-        console.error('提交用户信息失败:', error);
+        ElMessage.error('提交用户信息失败:', error);
     } finally {
         isLoading.value = false; // 结束加载
     }
 };
 
-// 处理好友列表、收藏歌曲和历史记录的点击事件
+// 切换好友列表的显示状态
+const toggleFriendsList = () => {
+    isFriendsVisible.value = !isFriendsVisible.value;
+};
+
 const handleAction = (action) => {
     emit('action-selected', action);
 };
@@ -51,15 +64,12 @@ const handleAction = (action) => {
 const buttonProps = {
     color: '#a0a20a',
     size: 'small',
-    type: 'info',
     plain: true,
 };
 
 const getUser = async () => {
-    await userStore.getUser(); 
-     userInfo.value = await userStore.user ; 
-    console.log('用户信息：userInfo.value',  userInfo.value);
-    console.log('用户信息：userStore.user.value', userStore.user);
+    await userStore.getUser();
+    userInfo.value = await userStore.user;
 };
 
 onMounted(() => {
@@ -74,9 +84,12 @@ onMounted(() => {
                 <img :src="userInfo?.image || defaultAvatar" alt="用户头像" class="avatar" />
             </div>
             <div class="user-info">
-                <p>用户：{{ userInfo.username }}</p>
-                <p>性别: {{ userInfo.gender === 0 ? '男' : userInfo.gender === 1 ? '女' : '未选择' }}</p>
-                <p>年龄: {{ userInfo.age }}</p>
+                <p>用户：{{ userInfo?.username }}</p>
+                <p>
+                    性别:
+                    {{ userInfo?.gender === 0 ? '男' : userInfo.gender === 1 ? '女' : '未选择' }}
+                </p>
+                <p>年龄: {{ userInfo?.age }}</p>
             </div>
         </div>
         <div v-if="isEditing" class="profile-header">
@@ -143,88 +156,111 @@ onMounted(() => {
             </el-popconfirm>
         </div>
         <div class="actions">
-            <el-button v-bind="buttonProps" @click="handleAction('friends')">好友列表</el-button>
+            <el-button v-bind="buttonProps" @click="toggleFriendsList">好友列表</el-button>
+            <!-- 展开好友列表 -->
+            <div v-if="isFriendsVisible">
+                <p>好友展示区域</p>
+                <!-- 在这里添加友人展示的具体内容 -->
+            </div>
+            <el-dropdown split-button size="small" color="#a0a20a" @click="handleAction('history')">
+                历史记录
+                <template #dropdown>
+                    <el-dropdown-menu>
+                        <el-dropdown-item @click="handleAction('record-upload')"
+                            >上传记录</el-dropdown-item
+                        >
+                        <el-dropdown-item @click="handleAction('record-listen')"
+                            >最近听歌</el-dropdown-item
+                        >
+                        <el-dropdown-item @click="handleAction('record-room')"
+                            >音乐室记录</el-dropdown-item
+                        >
+                    </el-dropdown-menu>
+                </template>
+            </el-dropdown>
             <el-button v-bind="buttonProps" @click="handleAction('favorites')">收藏歌曲</el-button>
-            <el-button v-bind="buttonProps" plain @click="handleAction('history')"
-                >历史记录</el-button
-            >
         </div>
     </div>
 </template>
 <style lang="scss" scoped>
 .profile-page {
-    height: 95%;
+    $border: 4px solid #403593;
+    height: calc(100% - 12px);
     font-size: small;
     color: #118c98;
-    border: 4px solid #0b144a;
+    border: $border;
     border-radius: 4px;
     padding: 2px;
     background-image: url('@/assets/BG.jpg');
     background-size: cover;
     background-position: center;
-}
 
-.profile-header {
-    display: flex;
-    align-items: center;
-}
-
-.avatar-container {
-    position: relative;
-    margin-right: 5%;
-}
-
-.bio-container {
-    margin-bottom: 5px;
-    margin-top: 5px;
-    .transparent-input {
-        opacity: 0.8;
-    }
-}
-
-.avatar {
-    width: 70px;
-    height: 70px;
-    object-fit: cover;
-}
-
-.edit-button {
-    margin-top: 5px;
-    margin-bottom: 5px;
-    display: flex;
-    justify-content: center;
-}
-
-.user-info {
-    flex-grow: 1;
-}
-
-.friends-actions {
-    margin-top: 20px;
-    display: flex;
-    justify-content: space-between;
-}
-
-.user-info-input {
-    .input-with-label {
+    .profile-header {
         display: flex;
-        justify-content: space-between; // 标签向左，输入框向右
         align-items: center;
+    }
+
+    .avatar-container {
+        position: relative;
+    }
+
+    .bio-container {
         margin-bottom: 5px;
-
-        .label {
-            margin-right: 10px; // 可选：标签和输入框之间的间距
-            white-space: nowrap; // 防止标签换行
-        }
-
-        .el-input,
-        .el-select,
-        .el-input-number {
+        margin-top: 5px;
+        .transparent-input {
             opacity: 0.8;
         }
-        .el-select,
-        .el-input-number {
-            width: 80px;
+    }
+
+    .avatar {
+        width: 70px;
+        height: 70px;
+        object-fit: cover;
+    }
+
+    .edit-button {
+        margin-top: 5px;
+        margin-bottom: 5px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .user-info {
+        flex-grow: 1;
+    }
+
+    .user-info-input {
+        .input-with-label {
+            display: flex;
+            justify-content: space-between; // 标签向左，输入框向右
+            align-items: center;
+            margin-bottom: 5px;
+
+            .label {
+                margin-right: 10px; // 可选：标签和输入框之间的间距
+                white-space: nowrap; // 防止标签换行
+            }
+
+            .el-input,
+            .el-select,
+            .el-input-number {
+                opacity: 0.8;
+            }
+            .el-select,
+            .el-input-number {
+                width: 80px;
+            }
+        }
+    }
+    .actions {
+        border: $border;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        .el-dropdown,
+        .el-button {
+            width: 103px;
+            margin-bottom: 30px;
         }
     }
 }

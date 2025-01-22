@@ -11,7 +11,15 @@ export const updateMusicStatusService = (musicId, status) =>
 // 删除歌曲
 export const deleteMusicService = (musicId) => request.delete(`/user/music/delete/${musicId}`);
 
-// export const uploadMusicService = (title,type,author,audioUrl,coverUrl) => request.post('/user/music/upload', file);
-export const uploadMusicService = (title,type,author,audioUrl,coverUrl) => {
-    console.log('uploadMusicService called with:', title,type,author,audioUrl,coverUrl);
+// 上传歌曲
+export const uploadMusicService = ({ title, type, author, audioUrl, coverUrl }) =>
+    request.post('/user/music/upload', { title, type, author, audioUrl, coverUrl });
+// export const uploadMusicService = (title, type, author, audioUrl, coverUrl) => {
+//     console.log('uploadMusicService called with:', title, type, author, audioUrl, coverUrl);
+// };
+
+// 获取歌曲信息
+// export const getMusicService = (musicId) => request.get(`/user/music/info/${musicId}`);
+export const getMusicService = (musicId) => {
+    console.log('getMusicService called with:', musicId);
 };

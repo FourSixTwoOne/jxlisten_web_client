@@ -3,98 +3,94 @@ import { defineProps, defineEmits } from 'vue';
 import { Star, WarnTriangleFilled } from '@element-plus/icons-vue';
 import BxLike from '@/components/icons/BxLikeSVG.vue';
 import AddIcon from '@/components/icons/AddSVG.vue';
+
 const props = defineProps({
-    isLiked: {
-        type: Boolean,
-        default: false,
-    },
-    isCollected: {
-        type: Boolean,
-        default: false,
-    },
-    likeCount: {
-        type: Number,
-        default: 0,
-    },
-    collectCount: {
-        type: Number,
-        default: 0,
+    type: {
+        type: String,
+        required: true,
     },
     row: {
         type: Object,
         required: true,
     },
 });
-const emit = defineEmits(['like', 'collect', 'report', 'addFriend']);
+
+const emit = defineEmits(['update']); // 定义事件
 
 const handleLike = () => {
-    emit('like', props.row); // 将行数据传递给父组件
+    const newRow = { ...props.row };
+    newRow.isLiked = !newRow.isLiked;
+    newRow.likeCount += newRow.isLiked ? 1 : -1;
+
+    emit('update', newRow);
 };
 
 const handleCollect = () => {
-    emit('collect', props.row);
+    const newRow = { ...props.row };
+    newRow.isCollected = !newRow.isCollected;
+    newRow.collectCount += newRow.isCollected ? 1 : -1;
+
+    emit('update', newRow);
 };
 
 const handleReport = () => {
-    emit('report', props.row);
+    // 调用举报服务
+    ElMessage.info('已举报');
 };
 
-const handleAddFriend = () => {
-    emit('addFriend', props.row);
+const addOrJion = () => {
+    if (props.type === 'music') {
+        ElMessage.info('已发送好友请求');
+    } else {
+        // 调用加入房间服务
+    }
 };
 </script>
+
 <template>
     <div class="button-group">
         <el-tooltip content="点赞" placement="top">
             <el-button
                 size="small"
-                type="link"
                 :icon="BxLike"
                 @click="handleLike"
-                :class="{ liked: isLiked }">
-                <span>{{ likeCount || 0 }}</span>
+                :class="{ liked: props.row.isLiked }">
+                <span>{{ props.row.likeCount || 0 }}</span>
             </el-button>
         </el-tooltip>
 
         <el-tooltip content="收藏" placement="top">
             <el-button
                 size="small"
-                type="link"
                 @click="handleCollect"
                 :icon="Star"
-                :class="{ collected: isCollected }">
-                <span>{{ collectCount || 0 }}</span>
+                :class="{ collected: props.row.isCollected }">
+                <span>{{ props.row.collectCount || 0 }}</span>
             </el-button>
         </el-tooltip>
 
-        <el-tooltip content="举报" placement="top" >
+        <el-tooltip content="举报" placement="top">
             <el-button
                 size="small"
-                type="link"
                 @click="handleReport"
                 :icon="WarnTriangleFilled"
                 class="report-btn">
             </el-button>
         </el-tooltip>
 
-        <el-tooltip  content="添加好友/加入聊天室" placement="top">
-            <el-button type="link" :icon="AddIcon" @click="handleAddFriend" class="add-or-jion">
-            </el-button>
+        <el-tooltip :content="props.type === 'music' ? '添加好友' : '加入音乐室'" placement="top">
+            <el-button :icon="AddIcon" @click="addOrJion" class="add-or-jion"> </el-button>
         </el-tooltip>
     </div>
 </template>
 
 <style scoped>
 .button-group {
-    width: anto;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-around;
-}
-
-.button-group el-button {
-    text-align: center;
+    width: 100%; /* 修改为100%以适应容器 */
 }
 
 .liked {
@@ -104,6 +100,7 @@ const handleAddFriend = () => {
 .collected {
     color: gold; /* 收藏后的颜色 */
 }
+
 .report-btn {
     color: red;
 }

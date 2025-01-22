@@ -1,107 +1,249 @@
-<template>  
-    <div class="main-page">  
-      <h1 class="title">欢迎来到音乐室</h1>  
-      
-      <div class="sections">  
-        <div class="music-list">  
-          <h2>已上传的音乐列表</h2>  
-          <el-table :data="musicTracks" style="width: 100%">  
-            <el-table-column prop="title" label="歌曲名" />  
-            <el-table-column prop="artist" label="艺术家" />  
-            <el-table-column prop="duration" label="时长" />  
-            <el-table-column label="操作">  
-              <template #default="scope">  
-                <el-button @click="playMusic(scope.row)" size="small" type="primary">播放</el-button>  
-              </template>  
-            </el-table-column>  
-          </el-table>  
-        </div>  
-        
-        <div class="music-room-list">  
-          <h2>当前开启的音乐室</h2>  
-          <el-list>  
-            <el-list-item v-for="room in musicRooms" :key="room.id">  
-              <el-card>  
-                <h3>{{ room.name }}</h3>  
-                <p>房主: {{ room.host }}</p>  
-                <el-button @click="joinRoom(room.id)" type="success">加入房间</el-button>  
-              </el-card>  
-            </el-list-item>  
-          </el-list>  
-        </div>  
-      </div>  
-    </div>  
-  </template>  
-  
-  <script setup>  
-  import { ref } from 'vue';  
-  
-  const musicTracks = ref([  
-    { title: "歌曲1", artist: "艺术家1", duration: "3:45" },  
-    { title: "歌曲2", artist: "艺术家2", duration: "4:12" },  
-    { title: "歌曲3", artist: "艺术家3", duration: "2:58" },  
-  ]);  
-  
-  const musicRooms = ref([  
-    { id: 1, name: "房间A", host: "用户A" },  
-    { id: 2, name: "房间B", host: "用户B" },  
-    { id: 3, name: "房间C", host: "用户C" },  
-  ]);  
-  
-  const playMusic = (track) => {  
-    console.log(`播放: ${track.title} - ${track.artist}`);  
-    // 这里可以调用播放器逻辑  
-  };  
-  
-  const joinRoom = (roomId) => {  
-    console.log(`加入房间: ${roomId}`);  
-    // 这里可以添加加入房间逻辑  
-  };  
-  </script>  
-  
-  <style scoped lang="scss">  
-  .main-page {  
-    padding: 20px;  
-  
-    .title {  
-      text-align: center;  
-      margin-bottom: 30px;  
-      font-size: 28px;  
-      color: #409eff;  
-    }  
-  
-    .sections {  
-      display: flex;  
-      justify-content: space-between;  
-  
-      .music-list {  
-        flex: 1;  
-        margin-right: 20px;  
-        background-color: #f9f9f9;  
-        border: 1px solid #ddd;  
-        border-radius: 8px;  
-        padding: 15px;  
-  
-        h2 {  
-          margin-bottom: 15px;  
-        }  
-      }  
-  
-      .music-room-list {  
-        flex: 1;  
-        background-color: #f9f9f9;  
-        border: 1px solid #ddd;  
-        border-radius: 8px;  
-        padding: 15px;  
-  
-        h2 {  
-          margin-bottom: 15px;  
-        }  
-  
-        .el-card {  
-          margin-bottom: 15px;  
-        }  
-      }  
-    }  
-  }  
-  </style>
+<script setup>
+import { Search, Upload } from '@element-plus/icons-vue';
+import { ref } from 'vue';
+
+const isLoading = ref(false);
+const total = ref(2);
+const dialog = ref(false);
+const coverFile = ref(null);
+const pageParams = ref({
+    page: 1,
+    pageSize: 10,
+    roomName: '',
+    createdName: '',
+    type: '',
+});
+
+const roomList = ref([
+    { roomName: '房间A', createdName: '用户A', createTime: '2023-10-01', coverUrl: 'cover_url_1' },
+    { roomName: '房间B', createdName: '用户B', createTime: '2023-10-02', coverUrl: 'cover_url_2' },
+]);
+
+const defaultCoverUrl = 'default_cover_url';
+
+const handleSearch = () => {
+    handleQuery();
+};
+
+const handleQuery = async () => {
+    isLoading.value = true;
+    // await getMusicListService(pageParams.value);
+    isLoading.value = false;
+};
+
+const createdForm = ref({
+    roomName: '',
+    createdName: '',
+    coverUrl: '',
+    description: '',
+});
+
+// 取消表单
+const cancelForm = () => {
+    // 重置表单
+    createdForm.value = {
+        roomName: '',
+        createdName: '',
+        coverUrl: '',
+        description: '',
+    };
+    dialog.value = false;
+};
+
+// 处理关闭
+const handleClose = () => {
+    cancelForm();
+};
+
+const onClick = async () => {
+    isLoading.value = true;
+    try {
+        // 上传封面
+        if (!coverFile.value) {
+            ElMessage.error('请选择封面图片');
+            return;
+        }
+
+        // const coverFormData = new FormData();
+        // coverFormData.append('file', coverFile.value);
+        // const coverResponse = await uploadFileService(coverFormData);
+        // createdForm.value.coverUrl = coverResponse.data.data;
+
+        // 调用update
+        // uploadMusicService(createdForm.value);
+        ElMessage.success('音乐室创建成功');
+    } catch (error) {
+        console.error('上传失败:', error);
+        ElMessage.error('上传失败');
+    } finally {
+        isLoading.value = false;
+    }
+};
+</script>
+
+<template>
+    <el-container class="listening-room-layout">
+        <el-header>
+            <span>音乐室列表</span>
+            <div class="search-container">
+                <div class="search-label">
+                    <el-icon><Search /></el-icon>音乐室名：
+                </div>
+                <el-input
+                    class="search-input"
+                    @input="handleSearch"
+                    v-model="pageParams.roomName"
+                    style="width: 120px; margin-right: 10px; height: 20px" />
+                <div class="search-label">
+                    <el-icon><Search /></el-icon>房主名：
+                </div>
+                <el-input
+                    class="search-input"
+                    @input="handleSearch"
+                    v-model="pageParams.createdName"
+                    style="width: 120px; margin-right: 4px; height: 20px" />
+            </div>
+            <el-button size="small" type="primary" @click="dialog = true" class="button-upload">
+                创建音乐室<el-icon class="el-icon--right"><Upload /></el-icon>
+            </el-button>
+        </el-header>
+        <el-main>
+            <el-drawer
+                v-model="dialog"
+                title="创建音乐室"
+                :before-close="handleClose"
+                direction="ltr"
+                class="drawer">
+                <div class="drawer__content">
+                    <el-form :model="createdForm">
+                        <el-form-item label="名称" :label-width="formLabelWidth">
+                            <el-input v-model="createdForm.roomName" autocomplete="off" />
+                        </el-form-item>
+                        <el-form-item label="房主" :label-width="formLabelWidth">
+                            <el-input v-model="createdForm.createdName" autocomplete="off" />
+                        </el-form-item>
+
+                        <el-form-item label="上传封面" :label-width="formLabelWidth">
+                            <CUploader
+                                placeholder="请上传封面图片"
+                                type="image"
+                                @file-selected="coverFile = $event" />
+                        </el-form-item>
+                        <el-form-item label="描述" :label-width="formLabelWidth">
+                            <el-input
+                                type="textarea"
+                                :rows="4"
+                                placeholder="请输入音乐室描述"
+                                v-model="createdForm.description" />
+                        </el-form-item>
+                        <div class="drawer__footer">
+                            <el-button @click="cancelForm">取消</el-button>
+                            <el-button type="primary" :loading="isLoading" @click="onClick">
+                                {{ isLoading ? '提交中...' : '提交' }}
+                            </el-button>
+                        </div>
+                    </el-form>
+                </div>
+            </el-drawer>
+            <el-table class="room-list" :data="roomList" v-loading="isLoading" fit>
+                <el-table-column label="封面" align="center">
+                    <template #default="scope">
+                        <img
+                            :src="scope.row.coverUrl ? scope.row.coverUrl : defaultCoverUrl"
+                            alt="封面"
+                            style="width: 40px; height: 40px; object-fit: cover" />
+                    </template>
+                </el-table-column>
+                <el-table-column label="名称" prop="title"> </el-table-column>
+                <el-table-column label="房主" prop="publisherId" />
+                <el-table-column label="创建时间" prop="uploadTime" />
+                <el-table-column label="操作" align="center" width="auto">
+                    <template>
+                        <el-button size="small" type="text">加入</el-button>
+                    </template>
+                </el-table-column>
+
+                <template #empty>
+                    <el-empty description="暂无数据" />
+                </template>
+            </el-table>
+        </el-main>
+        <el-footer>
+            <CustomPagination
+                :total="total"
+                :page="pageParams.page"
+                :pageSize="pageParams.pageSize"
+                @update:page="pageParams.page = $event"
+                @update:pageSize="pageParams.pageSize = $event"
+                @query="handleQuery" />
+        </el-footer>
+    </el-container>
+</template>
+
+<style lang="scss" scoped>
+.listening-room-layout {
+    $bg: rgb(92, 152, 213);
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+
+    .el-header,
+    .el-main,
+    .el-footer {
+        padding: 0 0;
+    }
+
+    .el-header {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        height: auto;
+        .search-container {
+            flex: 2;
+            background-color: rgb(48, 82, 116);
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: #b0b4b9;
+            height: 100%;
+
+            .search-label {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-left: 20px;
+
+                width: 80px;
+            }
+            .search-input {
+                opacity: 0.4;
+            }
+            .el-icon {
+                display: flex;
+                margin-top: 2px;
+            }
+        }
+        .button-upload {
+            flex: 0;
+            margin-right: 1;
+        }
+    }
+    .room-list {
+        font-size: 12px;
+        width: 100%;
+        background-color: $bg;
+        :deep(.el-table__cell) {
+            color: #1c3c53;
+            padding: 0;
+            margin: 0;
+            background-color: $bg;
+        }
+    }
+    .drawer__content {
+        padding: 20px;
+    }
+}
+</style>

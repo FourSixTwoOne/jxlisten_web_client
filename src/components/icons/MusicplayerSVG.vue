@@ -49,7 +49,3 @@ const props = defineProps({
         </path>
     </svg>
 </template>
-
-<style scoped>
-/* 可以在这里添加样式 */
-</style>

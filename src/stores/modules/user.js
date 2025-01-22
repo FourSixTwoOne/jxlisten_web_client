@@ -16,23 +16,23 @@ export const useUserStore = defineStore(
         };
 
         const user = ref({
-          userId: '',
-          username: '',
-          phone: '',
-          image: '',
-          createTime: '',
-          updateTime: '',
-          type: '',
-          gender: 0,
-          age: 0,
-          bio: '', 
+            userId: '',
+            username: '',
+            phone: '',
+            image: '',
+            createTime: '',
+            updateTime: '',
+            type: 0,
+            gender: 0,
+            age: 0,
+            bio: '',
         });
         const getUser = async () => {
             const res = await getUserService();
             if (res.status === 200) {
-              user.value = res.data.data;
+                user.value = res.data.data;
             }
-            
+
             console.log('user:', user.value);
         };
         const setUser = (newUser) => {

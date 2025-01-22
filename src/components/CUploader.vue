@@ -32,7 +32,7 @@ const handleChange = (uploadFile) => {
 
 // 检查上传条件
 const beforeUpload = (file) => {
-    const isLt2M = file.size / 1024 / 1024 < 2; // 文件大小限制为2MB
+    const isLt2M = file.size / 1024 / 1024 < 30; // 文件大小限制为30MB
     let isValid = true;
 
     if (props.type === 'image') {
@@ -62,7 +62,6 @@ const removeAudio = () => {
     fileUrl.value = '';
     fileName.value = '';
     file.value = null;
-   
 };
 </script>
 
@@ -74,17 +73,18 @@ const removeAudio = () => {
         :show-file-list="false"
         :auto-upload="false">
         <img v-if="fileUrl && isImage" :src="fileUrl" class="avatar" />
-        <el-icon v-else-if="fileUrl && !isImage" class="audio-icon"></el-icon>
+        <el-icon v-else-if="fileUrl && !isImage" class="audio-icon">
+            <!-- 显示音乐名称和取消按钮 -->
+            <div v-if="fileName && !isImage" class="audio-info">
+                <span class="file-name">{{ fileName }}</span>
+                <el-button size="small" type="danger" @click="removeAudio">×</el-button>
+            </div>
+        </el-icon>
         <div v-else class="el-upload__text">
             <el-icon class="avatar-uploader-icon"><Plus /> </el-icon>
             {{ placeholder }}
         </div>
     </el-upload>
-    <!-- 显示音乐名称和取消按钮 -->
-    <div v-if="fileName && !isImage" class="audio-info">
-        <span>{{ fileName }}</span>
-        <el-button size="mini" type="danger" @click="removeAudio">×</el-button>
-    </div>
 </template>
 
 <style scoped>
@@ -95,6 +95,9 @@ const removeAudio = () => {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+   
+
+    
 }
 
 .avatar {
@@ -109,19 +112,19 @@ const removeAudio = () => {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 20px;
     color: #8c939d;
 }
 
 .audio-icon {
-    font-size: 70px; /* 音频图标大小 */
-    color: #8c939d;
-}
-
-.audio-info {
+    width: 100%;
+    height: 100%;
     display: flex;
+    justify-content: center;
     align-items: center;
-    margin-top: 5px;
+    font-size: 16px;
+
+    color: #8c939d;
+
 }
 
 .audio-info span {

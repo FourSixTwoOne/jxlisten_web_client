@@ -1,25 +1,21 @@
 <script setup>
 import { ref, defineProps } from 'vue';
 import MusicplayerSVG from '@/components/icons/MusicplayerSVG.vue';
+import { useSongStore } from '@/stores';
 
+const songStore = useSongStore();
 const props = defineProps({
-    audioUrl: {
-        type: String,
+    row: {
+        type: Object,
         default: null,
     },
 });
 
 const isPlayer = ref(false);
-const audio = new Audio(props.audioUrl);
 
 const togglePlayer = async () => {
     isPlayer.value = !isPlayer.value;
-    if (isPlayer.value) {
-        audio.play(); // 播放音乐
-        console.log('Audio URL:', props.audioUrl);
-    } else {
-        audio.pause(); // 暂停音乐
-    }
+    songStore.setSong(props.row);
 };
 </script>
 
@@ -31,6 +27,4 @@ const togglePlayer = async () => {
     </div>
 </template>
 
-<style scoped>
-/* 可以在这里添加样式 */
-</style>
+<style scoped></style>

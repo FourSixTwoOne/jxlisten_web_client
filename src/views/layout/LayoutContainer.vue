@@ -6,12 +6,12 @@ import logo from '@/assets/logo-192x192.png'; // 应用 logo
 import nameLogo from '@/assets/juexianlisten.png'; // 应用名称 logo
 import defaultAvatar from '@/assets/default.png';
 import { Headset, HomeFilled } from '@element-plus/icons-vue';
-import DownContainer from '@/views/component/DownContainer.vue';
+import ThreeContainer from '@/views/component/ThreeContainer.vue';
 import router from '@/router';
 
 const userStore = useUserStore();
 const isProfileVisible = ref(false);
-const downView = ref('music'); // music:'音乐', room:'音乐室', friend:'好友列表'，collect:'我的收藏', record:'浏览记录', upload:'我的上传'
+const viewName = ref('music'); // music:'音乐', room:'音乐室', friend:'好友列表'，collect:'我的收藏', record:'浏览记录', upload:'我的上传'
 
 // 计算属性获取用户信息
 const user = computed(() => userStore.user);
@@ -19,16 +19,6 @@ const user = computed(() => userStore.user);
 onMounted(() => {
     user.value = userStore.user.value;
 });
-// 播放音乐的函数
-const playMusic = (track) => {
-    console.log(`播放音乐: ${track.title}`);
-};
-
-// 加入音乐室的函数
-const joinRoom = (room) => {
-    console.log(`加入音乐室: ${room.name}`);
-};
-
 // 切换个人界面的可见性
 const toggleProfile = () => {
     isProfileVisible.value = !isProfileVisible.value;
@@ -45,7 +35,14 @@ const logout = () => {
 const closeProfile = () => {
     isProfileVisible.value = false;
 };
+
+// 切换视图方法
+const changeView = (view) => {
+    viewName.value = view;
+    console.log('切换视图成功！',view);
+};
 </script>
+
 <template>
     <el-watermark :font="font" :content="['陆2壹', '绝弦juexianlisten']">
         <div class="layout-container">
@@ -75,63 +72,56 @@ const closeProfile = () => {
             </el-header>
 
             <el-main class="main">
-                <div class="oneContent">
-                    <div class="twoContent">
-                        <div class="left-column">
-                            <el-menu
-                                active-text-color="#ffd04b"
-                                background-color="#087099"
-                                :default-active="$route.path"
-                                text-color="#fff"
-                                router
-                                class="custom-menu">
-                                <el-menu-item index="/user/music_list">
-                                    <el-icon class="icon">
-                                        <Headset />
-                                    </el-icon>
-                                    <div class="menu-text">
-                                        <span class="single-letter">音</span>
-                                        <span class="single-letter">乐</span>
-                                        <span class="single-letter">列</span>
-                                        <span class="single-letter">表</span>
-                                    </div>
-                                </el-menu-item>
-                            </el-menu>
-                            <div class="divider"></div>
-                            <el-menu
-                                active-text-color="#ffd04b"
-                                background-color="#087099"
-                                :default-active="$route.path"
-                                text-color="#fff"
-                                router
-                                class="custom-menu">
-                                <el-menu-item index="/user/room_list">
-                                    <el-icon class="icon">
-                                        <HomeFilled />
-                                    </el-icon>
-                                    <div class="menu-text">
-                                        <span class="single-letter">音</span>
-                                        <span class="single-letter">乐</span>
-                                        <span class="single-letter">室</span>
-                                        <span class="single-letter">列</span>
-                                        <span class="single-letter">表</span>
-                                    </div>
-                                </el-menu-item>
-                            </el-menu>
-                        </div>
-                        <div class="right-column" :class="{ shrink: isProfileVisible }">
-                            <router-view />
-                        </div>
-                        <div
-                            class="profile"
-                            v-if="isProfileVisible"
-                            :class="{ visible: isProfileVisible }">
-                            <ProfilePage @close="closeProfile" />
-                        </div>
-                    </div>
-                    <div class="threeContent">
-                        <DownContainer />
-                    </div>
+                <div class="one-column">
+                    <el-menu
+                        active-text-color="#ffd04b"
+                        background-color="#087099"
+                        :default-active="$route.path"
+                        text-color="#fff"
+                        router
+                        class="custom-menu">
+                        <el-menu-item index="/user/music_list" @click="changeView('music')">
+                            <el-icon class="icon">
+                                <Headset />
+                            </el-icon>
+                            <div class="menu-text">
+                                <span class="single-letter">音</span>
+                                <span class="single-letter">乐</span>
+                                <span class="single-letter">列</span>
+                                <span class="single-letter">表</span>
+                            </div>
+                        </el-menu-item>
+                    </el-menu>
+                    <div class="divider"></div>
+                    <el-menu
+                        active-text-color="#ffd04b"
+                        background-color="#087099"
+                        :default-active="$route.path"
+                        text-color="#fff"
+                        router
+                        class="custom-menu">
+                        <el-menu-item index="/user/room_list" @click="changeView('room')">
+                            <el-icon class="icon">
+                                <HomeFilled />
+                            </el-icon>
+                            <div class="menu-text">
+                                <span class="single-letter">音</span>
+                                <span class="single-letter">乐</span>
+                                <span class="single-letter">室</span>
+                                <span class="single-letter">列</span>
+                                <span class="single-letter">表</span>
+                            </div>
+                        </el-menu-item>
+                    </el-menu>
+                </div>
+                <div class="two-column" :class="{ shrink: isProfileVisible }">
+                    <router-view />
+                </div>
+                <div class="three-container">
+                    <ThreeContainer :viewName="viewName" :key="viewName"/>
+                </div>
+                <div class="profile" v-if="isProfileVisible" :class="{ visible: isProfileVisible }">
+                    <ProfilePage @close="closeProfile" @action-selected="changeView"/>
                 </div>
             </el-main>
 
@@ -141,14 +131,17 @@ const closeProfile = () => {
         </div>
     </el-watermark>
 </template>
+
 <style lang="scss" scoped>
 .layout-container {
     height: 100vh;
+    width: 100%;
     display: flex;
     flex-direction: column;
     background-image: url('@/assets/BG.jpg');
     background-size: cover;
     background-position: center;
+    $border: 4px solid #403593;
 
     .header {
         display: flex;
@@ -215,87 +208,76 @@ const closeProfile = () => {
     }
 
     .main {
-        padding: 2px;
-    }
-
-    .oneContent {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
         height: 100%;
+        display: flex;
+        flex: 1;
+        border: $border;
+        padding: 0;
+        overflow: hidden;
+        flex-direction: row;
 
-        .twoContent {
+        .one-column {
             display: flex;
-            flex: 1;
-            width: 100%;
-            height: 50%;
+            flex-direction: column;
+            justify-content: center;
+            margin-left: 3px;
+            margin-right: 3px;
+            width: 30px;
 
-            .left-column {
+            .el-menu-item {
+                display: flex;
+                height: 10%;
+                flex-direction: column;
+                padding: 2px;
+            }
+
+            .divider {
+                width: 100%;
+                height: 3px;
+                background-color: #275561;
+                margin: 10px 0;
+            }
+
+            .icon {
+                margin-left: 5px;
+            }
+
+            .menu-text {
                 display: flex;
                 flex-direction: column;
+                text-align: center;
                 justify-content: center;
-                margin-right: 5px;
-                width: 4%;
-
-                .el-scrollbar {
-                    width: 40px;
-                }
-                .el-menu-item {
-                    display: flex;
-                    height: 10%;
-                    flex-direction: column;
-                    padding: 2px;
-                }
-
-                .divider {
-                    width: 100%;
-                    height: 3px;
-                    background-color: #275561;
-                    margin: 10px 0;
-                }
-
-                .icon {
-                    margin-left: 5px;
-                }
-
-                .menu-text {
-                    display: flex;
-                    flex-direction: column;
-                    text-align: center;
-                }
-
-                .single-letter {
-                    display: block;
-                    line-height: 2;
-                }
             }
 
-            .right-column {
-                flex: 1;
-                border-left: 2px solid #403593;
-                overflow-y: auto;
-                &.shrink {
-                    flex: 0 0 calc(95% - 260px);
-                }
-            }
-
-            .profile {
-                width: 260px;
-                background-color: rgb(4, 36, 60);
-                overflow-y: auto;
+            .single-letter {
+                display: block;
+                line-height: 2;
             }
         }
 
-        .threeContent {
+        .two-column {
+            width: calc(100% - 400px);
+            border-left: $border;
+            overflow-y: auto; // 添加滚动条
+            &.shrink {
+                flex: calc(100% - 700px);
+            }
+        }
+        .three-container {
             display: flex;
-            flex: 1;
-            width: 100%;
-            height: 50%;
-            border-top: 4px solid #403593;
-            border-bottom: 4px solid #403593;
+            flex: auto;
+            border-left: $border;
+            &.shrink {
+                flex: 0 0 200px;
+            }
+        }
+        .profile {
+            width: 260px;
+            height: 100%;
+            background-color: rgb(4, 36, 60);
+            overflow-y: auto; // 添加滚动条
         }
     }
-
     .footer {
         height: 25px;
         padding: 1px;

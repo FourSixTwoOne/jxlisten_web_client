@@ -74,19 +74,30 @@ const register = async () => {
         ElMessage.error(res.data.msg);
     }
 };
+
+const toggleRegister = () => {
+    isRegister.value = true;
+    formModel.value = {
+        username: '',
+        phone: '',
+        password: '',
+        rePassword: '',
+    };
+};
+
 const login = async () => {
     await form.value.validate();
     const res = await loginUserService(formModel.value);
-    // if (res.data.code === 1) {
-    //     userStore.setToken(res.data.data.token);
-    ElMessage.success('登录成功');
-    userStore.setToken('1234w');
-    await userStore.getUser();
+    if (res.data.code === 1) {
+        userStore.setToken(res.data.data.token);
+        ElMessage.success('登录成功');
+        // userStore.setToken('1234w');
+        await userStore.getUser();
 
-    router.push('/');
-    // } else {
-    //     ElMessage.error(res.data.msg);
-    // }
+        router.push('/');
+    } else {
+        ElMessage.error(res.data.msg);
+    }
 };
 </script>
 
@@ -182,7 +193,7 @@ const login = async () => {
                         </el-button>
                     </el-form-item>
                     <el-form-item class="flex">
-                        <el-link type="info" :underline="false" @click="isRegister = true">
+                        <el-link type="info" :underline="false" @click="toggleRegister">
                             注册 →
                         </el-link>
                     </el-form-item>
@@ -227,7 +238,7 @@ const login = async () => {
             width: 100%;
         }
         .flex {
-            width: 100%;
+            width: 200px;
             display: flex;
             justify-content: space-between;
         }

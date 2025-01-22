@@ -27,23 +27,27 @@ const router = createRouter({
                 },
                 {
                     path: '/user/music_room',
-                    component: () => import('@/views/userView/ListeningRoom.vue'),//音乐室
+                    component: () => import('@/views/otherView/ListeningRoom.vue'),//音乐室
                 },
                 {
                     path: '/user/music',
-                    component: () => import('@/views/userView/MusicPlayer.vue'),//音乐播放器
+                    component: () => import('@/views/otherView/MusicPlayer.vue'),//音乐播放器
                 },
                 {
                     path: '/user/favorite',
-                    component: () => import('@/views/userView/FavoriteView.vue'),//收藏列表
+                    component: () => import('@/views/otherView/FavoriteView.vue'),//收藏列表
                 },
                 {
                     path: '/user/friend',
-                    component: () => import('@/views/userView/FriendView.vue'),//好友列表
+                    component: () => import('@/views/otherView/FriendView.vue'),//好友列表
                 },
                 {
                     path: '/user/record',
-                    component: () => import('@/views/userView/RecordView.vue'),//听歌记录
+                    component: () => import('@/views/otherView/RecordView.vue'),//听歌记录
+                },
+                {
+                    path: '/user/upload',
+                    component: () => import('@/views/otherView/MyUploadView.vue'),//上传歌曲
                 },
             ],
         },
