@@ -4,6 +4,9 @@ import request from '@/utils/request';
 export const getListeningRoomListService = ({ roomId, page, pageSize, roomName, status }) =>
     request.get('/user/listen/list', { params: { roomId, page, pageSize, roomName, status } });
 
+//查询音乐室信息
+export const getRoomService = (roomId) => request.get(`/user/listen/info/${roomId}`);
+
 // 修改音乐室状态
 export const updateListeningRoomStatusService = (roomId, status) =>
     request.put(`/user/listen/status/${roomId}?status=${status}`);

@@ -11,6 +11,7 @@ import router from '@/router';
 
 const userStore = useUserStore();
 const isProfileVisible = ref(false);
+const isThreeVisible = ref(false);
 const viewName = ref('music'); // music:'音乐', room:'音乐室', friend:'好友列表'，collect:'我的收藏', record:'浏览记录', upload:'我的上传'
 
 // 计算属性获取用户信息
@@ -22,6 +23,11 @@ onMounted(() => {
 // 切换个人界面的可见性
 const toggleProfile = () => {
     isProfileVisible.value = !isProfileVisible.value;
+};
+
+const changeContent = (view) => {
+    viewName.value = view;
+    isThreeVisible.value = true;
 };
 
 // 登出函数
@@ -36,10 +42,14 @@ const closeProfile = () => {
     isProfileVisible.value = false;
 };
 
+const closeThreeContainer = () => {
+    isThreeVisible.value = false;
+};
+
 // 切换视图方法
 const changeView = (view) => {
     viewName.value = view;
-    console.log('切换视图成功！',view);
+    console.log('切换视图成功！', view);
 };
 </script>
 
@@ -52,6 +62,26 @@ const changeView = (view) => {
                     <div class="vertical-line"></div>
                     <div class="container">
                         <img :src="nameLogo" alt="Name" class="name-logo" />
+                    </div>
+                </div>
+                <div class="controls-butoons">
+                    <div class="player-controls">
+                        <el-button
+                            type="primary"
+                            size="small"
+                            class="play-btn"
+                            @click="changeContent('music')"
+                            >播放器</el-button
+                        >
+                    </div>
+                    <div class="listenRoom-controls">
+                        <el-button
+                            type="primary"
+                            size="small"
+                            class="play-btn"
+                            @click="changeContent('room')"
+                            >音乐室</el-button
+                        >
                     </div>
                 </div>
                 <div class="user-section">
@@ -80,7 +110,7 @@ const changeView = (view) => {
                         text-color="#fff"
                         router
                         class="custom-menu">
-                        <el-menu-item index="/user/music_list" @click="changeView('music')">
+                        <el-menu-item index="/user/music_list">
                             <el-icon class="icon">
                                 <Headset />
                             </el-icon>
@@ -100,7 +130,7 @@ const changeView = (view) => {
                         text-color="#fff"
                         router
                         class="custom-menu">
-                        <el-menu-item index="/user/room_list" @click="changeView('room')">
+                        <el-menu-item index="/user/room_list">
                             <el-icon class="icon">
                                 <HomeFilled />
                             </el-icon>
@@ -114,14 +144,17 @@ const changeView = (view) => {
                         </el-menu-item>
                     </el-menu>
                 </div>
-                <div class="two-column" :class="{ shrink: isProfileVisible }">
+                <div
+                    class="two-column"
+                    :class="{ shrink: isThreeVisible, visible: isProfileVisible }">
                     <router-view />
                 </div>
-                <div class="three-container">
-                    <ThreeContainer :viewName="viewName" :key="viewName"/>
+                <div class="three-container" v-if="isThreeVisible">
+                    <button class="close-button" @click="closeThreeContainer">×</button>
+                    <ThreeContainer :viewName="viewName" :key="viewName" />
                 </div>
                 <div class="profile" v-if="isProfileVisible" :class="{ visible: isProfileVisible }">
-                    <ProfilePage @close="closeProfile" @action-selected="changeView"/>
+                    <ProfilePage @close="closeProfile" @action-selected="changeView" />
                 </div>
             </el-main>
 
@@ -149,6 +182,13 @@ const changeView = (view) => {
         align-items: center;
         background-color: rgba(74, 58, 111, 0.724);
         height: 35px;
+
+        .controls-butoons {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
 
         .logo-section {
             display: flex;
@@ -256,11 +296,15 @@ const changeView = (view) => {
         }
 
         .two-column {
-            width: calc(100% - 400px);
+            width: 100%;
             border-left: $border;
             overflow-y: auto; // 添加滚动条
+
             &.shrink {
-                flex: calc(100% - 700px);
+                flex: calc(100% - 400px);
+                &.visible {
+                    flex: calc(100% - 700px);
+                }
             }
         }
         .three-container {
@@ -269,6 +313,18 @@ const changeView = (view) => {
             border-left: $border;
             &.shrink {
                 flex: 0 0 200px;
+            }
+            position: relative;
+            .close-button {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: none;
+                border: none;
+                font-size: 25px;
+                color: rgb(234, 223, 12);
+                cursor: pointer;
+                z-index: 1;
             }
         }
         .profile {
