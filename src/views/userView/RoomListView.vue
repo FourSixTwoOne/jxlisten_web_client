@@ -84,7 +84,7 @@ const onClick = async () => {
 <template>
     <el-container class="listening-room-layout">
         <el-header>
-            <span>音乐室列表</span>
+            <el-text size="large" type="primary">音乐室列表</el-text>
             <div class="search-container">
                 <div class="search-label">
                     <el-icon><Search /></el-icon>音乐室名：
@@ -100,51 +100,50 @@ const onClick = async () => {
                 <el-input
                     class="search-input"
                     @input="handleSearch"
-                    v-model="pageParams.createdName"
-                    style="width: 120px; margin-right: 4px; height: 20px" />
+                    v-model="pageParams.createdName" />
             </div>
             <el-button size="small" type="primary" @click="dialog = true" class="button-upload">
                 创建音乐室<el-icon class="el-icon--right"><Upload /></el-icon>
             </el-button>
         </el-header>
-        <el-main>
-            <el-drawer
-                v-model="dialog"
-                title="创建音乐室"
-                :before-close="handleClose"
-                direction="ltr"
-                class="drawer">
-                <div class="drawer__content">
-                    <el-form :model="createdForm">
-                        <el-form-item label="名称" :label-width="formLabelWidth">
-                            <el-input v-model="createdForm.roomName" autocomplete="off" />
-                        </el-form-item>
-                        <el-form-item label="房主" :label-width="formLabelWidth">
-                            <el-input v-model="createdForm.createdName" autocomplete="off" />
-                        </el-form-item>
+        <el-drawer
+            v-model="dialog"
+            title="创建音乐室"
+            :before-close="handleClose"
+            direction="ltr"
+            class="drawer">
+            <div class="drawer__content">
+                <el-form :model="createdForm">
+                    <el-form-item label="名称" :label-width="formLabelWidth">
+                        <el-input v-model="createdForm.roomName" autocomplete="off" />
+                    </el-form-item>
+                    <el-form-item label="房主" :label-width="formLabelWidth">
+                        <el-input v-model="createdForm.createdName" autocomplete="off" />
+                    </el-form-item>
 
-                        <el-form-item label="上传封面" :label-width="formLabelWidth">
-                            <CUploader
-                                placeholder="请上传封面图片"
-                                type="image"
-                                @file-selected="coverFile = $event" />
-                        </el-form-item>
-                        <el-form-item label="描述" :label-width="formLabelWidth">
-                            <el-input
-                                type="textarea"
-                                :rows="4"
-                                placeholder="请输入音乐室描述"
-                                v-model="createdForm.description" />
-                        </el-form-item>
-                        <div class="drawer__footer">
-                            <el-button @click="cancelForm">取消</el-button>
-                            <el-button type="primary" :loading="isLoading" @click="onClick">
-                                {{ isLoading ? '提交中...' : '提交' }}
-                            </el-button>
-                        </div>
-                    </el-form>
-                </div>
-            </el-drawer>
+                    <el-form-item label="上传封面" :label-width="formLabelWidth">
+                        <CUploader
+                            placeholder="请上传封面图片"
+                            type="image"
+                            @file-selected="coverFile = $event" />
+                    </el-form-item>
+                    <el-form-item label="描述" :label-width="formLabelWidth">
+                        <el-input
+                            type="textarea"
+                            :rows="4"
+                            placeholder="请输入音乐室描述"
+                            v-model="createdForm.description" />
+                    </el-form-item>
+                    <div class="drawer__footer">
+                        <el-button @click="cancelForm">取消</el-button>
+                        <el-button type="primary" :loading="isLoading" @click="onClick">
+                            {{ isLoading ? '提交中...' : '提交' }}
+                        </el-button>
+                    </div>
+                </el-form>
+            </div>
+        </el-drawer>
+        <el-main>
             <el-table class="room-list" :data="roomList" v-loading="isLoading" fit>
                 <el-table-column label="封面" align="center">
                     <template #default="scope">
@@ -181,6 +180,7 @@ const onClick = async () => {
 </template>
 
 <style lang="scss" scoped>
+@use '@/assets/main.scss' as *;
 .listening-room-layout {
     $bg: rgb(92, 152, 213);
     display: flex;
@@ -201,21 +201,20 @@ const onClick = async () => {
         justify-content: space-between;
         align-items: center;
         height: auto;
+        border-bottom: $border;
+        padding: 2px 10px;
+
         .search-container {
-            flex: 2;
-            background-color: rgb(48, 82, 116);
+            margin: 0 10%;
             display: flex;
             align-items: center;
+            justify-content: center;
             font-size: 12px;
             color: #b0b4b9;
-            height: 100%;
-
             .search-label {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                margin-left: 20px;
-
                 width: 80px;
             }
             .search-input {
@@ -224,6 +223,11 @@ const onClick = async () => {
             .el-icon {
                 display: flex;
                 margin-top: 2px;
+            }
+            .el-input {
+                width: 120px;
+                height: 20px;
+                margin-right: 4px;
             }
         }
         .button-upload {
@@ -244,6 +248,12 @@ const onClick = async () => {
     }
     .drawer__content {
         padding: 20px;
+    }
+
+    .el-footer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 }
 </style>

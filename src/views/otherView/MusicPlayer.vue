@@ -1,9 +1,11 @@
 <script setup>
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
+import defaultCover from '@/assets/android-chrome-512x512.png';
 import NextSongSVG from '@/components/icons/NextSongSVG.vue';
 import PrevSongSVG from '@/components/icons/PrevSongSVG.vue';
 import MusicPlayerSVG from '@/components/icons/MusicplayerSVG.vue';
-import { ref, watch } from 'vue';
-import defaultCover from '@/assets/android-chrome-512x512.png';
+import { Delete } from '@element-plus/icons-vue';
+
 const playlist = ref([
     {
         musicId: 1,
@@ -13,29 +15,55 @@ const playlist = ref([
         author: '作者1',
         uploadTime: '2023-10-01',
         audioUrl: 'http://localhost:5173/src/assets/music/%E5%B0%8F%E5%9F%8E%E8%B0%A3%20-%20Vk.mp3',
-        type: 1, // 1: 原创, 2: 翻唱, 3: 转载
-        likeCount: 0,
-        collectCount: 0,
-        isLiked: false,
-        isCollected: false,
+        type: 1,
+    },
+    {
+        musicId: 2,
+        coverUrl: '',
+        title: '曲名2',
+        publisher: '发布者2',
+        author: '作者2',
+        uploadTime: '2023-10-01',
+        audioUrl: 'http://localhost:5173/src/assets/music/小城夏天 - LBI利比.mp3',
+        type: 2,
     },
 ]);
-const currentSongIndex = ref(0);
-const currentSong = ref(playlist.value[currentSongIndex.value]);
+
+const currentIndex = ref(0);
+const currentSong = computed(() => playlist.value[currentIndex.value]);
 const isPlaying = ref(false);
 const audio = new Audio(currentSong.value.audioUrl);
 const currentTime = ref(0);
+const totalTime = ref(0);
+const isSeeking = ref(false);
 
-watch(
-    () => currentSongIndex.value,
-    (newIndex) => {
-        currentSong.value = playlist.value[newIndex];
-        audio.src = currentSong.value.audioUrl;
-        if (isPlaying.value) {
-            audio.play();
-        }
+const handleLoadedMetadata = () => {
+    totalTime.value = audio.duration;
+};
+
+const handleTimeUpdate = () => {
+    if (!isSeeking.value) {
+        currentTime.value = audio.currentTime;
     }
-);
+};
+
+onMounted(() => {
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+});
+
+onUnmounted(() => {
+    audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.removeEventListener('timeupdate', handleTimeUpdate);
+});
+
+watch(currentIndex, (newIndex) => {
+    audio.src = currentSong.value.audioUrl;
+    currentTime.value = 0;
+    totalTime.value = 0;
+    isPlaying.value = true;
+    audio.play();
+});
 
 const togglePlay = () => {
     isPlaying.value = !isPlaying.value;
@@ -47,12 +75,11 @@ const togglePlay = () => {
 };
 
 const nextSong = () => {
-    currentSongIndex.value = (currentSongIndex.value + 1) % playlist.value.length;
+    currentIndex.value = (currentIndex.value + 1) % playlist.value.length;
 };
 
 const prevSong = () => {
-    currentSongIndex.value =
-        (currentSongIndex.value - 1 + playlist.value.length) % playlist.value.length;
+    currentIndex.value = (currentIndex.value - 1 + playlist.value.length) % playlist.value.length;
 };
 
 const seekSong = (time) => {
@@ -60,13 +87,16 @@ const seekSong = (time) => {
 };
 
 const selectSong = (index) => {
-    currentSongIndex.value = index;
+    currentIndex.value = index;
+    if (isPlaying.value) {
+        audio.play();
+    }
 };
 
 const removeSong = (index) => {
     playlist.value.splice(index, 1);
-    if (currentSongIndex.value >= playlist.value.length) {
-        currentSongIndex.value = playlist.value.length - 1; // 确保索引不越界
+    if (currentIndex.value >= playlist.value.length) {
+        currentIndex.value = playlist.value.length - 1; // 确保索引不越界
     }
 };
 
@@ -84,7 +114,6 @@ const formatTime = (time) => {
         <div class="player-area">
             <div class="song">
                 <h2>{{ currentSong.title }}</h2>
-
                 <img
                     :src="currentSong?.coverUrl || defaultCover"
                     alt="专辑封面"
@@ -105,16 +134,16 @@ const formatTime = (time) => {
                     <span class="current-time">{{ formatTime(currentTime) }}</span>
                     <el-slider
                         v-model="currentTime"
-                        :max="currentSong.duration"
+                        :max="totalTime"
                         class="progress-bar"
-                        @change="seekSong"></el-slider>
-                    <span class="total-time">{{ formatTime(currentSong.duration) }}</span>
+                        @mousedown="isSeeking = true"
+                        @change="seekSong(currentTime)"
+                        @mouseup="isSeeking = false"></el-slider>
+                    <span class="total-time">{{ formatTime(totalTime) }}</span>
                 </div>
                 <div class="control-up">
-                    <el-button
-                        @click="prevSong"
-                        :icon="PrevSongSVG"
-                        class="control-btn"></el-button>
+                    <el-button @click="prevSong" :icon="PrevSongSVG" class="control-btn">
+                    </el-button>
                     <el-button @click="togglePlay" class="control-btn">
                         <MusicPlayerSVG :isPlaying="isPlaying" />
                     </el-button>
@@ -133,13 +162,15 @@ const formatTime = (time) => {
                     v-for="(song, index) in playlist"
                     :key="index"
                     @click="selectSong(index)"
-                    :class="{ active: currentSongIndex === index }">
+                    :class="{ active: currentIndex === index }">
                     <span>{{ song.title }}</span> - <span>{{ song.author }}</span>
                     <el-button
-                        icon="el-icon-delete"
                         @click.stop="removeSong(index)"
                         class="remove-btn"
-                        size="mini"></el-button>
+                        type="text"
+                        size="small">
+                        <el-icon><Delete /></el-icon>
+                    </el-button>
                 </li>
             </ul>
         </div>
@@ -147,14 +178,12 @@ const formatTime = (time) => {
 </template>
 
 <style lang="scss" scoped>
+@use '@/assets/main.scss' as *;
 .music-player {
-    $border: 4px solid #3247bc;
     display: flex;
     position: relative;
     flex-direction: column;
-    border: $border; /* 边框属性提取 */
-    border-radius: 8px;
-    background-color: #97d9f1;
+    background-color: $bg;
     width: 100%;
     align-items: center;
     justify-content: center;
@@ -167,7 +196,41 @@ const formatTime = (time) => {
         width: 100%;
         align-items: center;
         justify-content: center;
-        border-bottom: $border;
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid rgb(170, 176, 172);
+            border-radius: 40px;
+            margin-top: 10px;
+            margin: 10px 0;
+            width: 95%;
+
+            .control-btn {
+                height: 20px;
+                padding: 0 20px;
+                margin-bottom: 5px;
+            }
+
+            .progress-area {
+                display: flex;
+                align-items: center;
+                flex-direction: row;
+
+                .current-time,
+                .total-time {
+                    font-size: 10%;
+                    width: 50px; /* 时间显示宽度 */
+                    text-align: center;
+                }
+
+                .progress-bar {
+                    width: 150px;
+                    margin: 0 10px;
+                }
+            }
+        }
 
         .song {
             text-align: center;
@@ -180,7 +243,6 @@ const formatTime = (time) => {
             .album-cover {
                 width: 100px; /* 封面大小 */
                 height: 100px; /* 封面大小 */
-                border-radius: 8px;
                 margin: 10px 0;
             }
 
@@ -201,46 +263,12 @@ const formatTime = (time) => {
                 }
             }
         }
-
-        .controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            border: 1px solid rgb(170, 176, 172);
-            border-radius: 40px;
-            margin-top: 10px;
-            margin: 10px 0 10px 0;
-            width: 95%;
-
-            .control-btn {
-                height: 20px;
-                padding: 0 20px;
-                margin-bottom: 5px;
-            }
-            .progress-area {
-                display: flex;
-                align-items: center;
-                flex-direction: row;
-                .current-time,
-                .total-time {
-                    font-size: 10%;
-                    width: 50px; /* 时间显示宽度 */
-                    text-align: center;
-                }
-
-                .progress-bar {
-                    width: 150px;
-                    margin: 0 10px;
-                }
-            }
-        }
     }
 
     .playlist-area {
         flex: 1;
         height: 100%;
         width: 100%;
-        border: $border;
         overflow-y: auto; /* 允许滚动 */
         h3 {
             font-size: 16px;
@@ -250,18 +278,19 @@ const formatTime = (time) => {
             list-style-type: none;
             padding: 0;
             li {
+                background-color: aqua;
                 cursor: pointer;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 transition: background-color 0.3s;
-
+                
                 &:hover {
-                    background-color: #478cc5;
+                    background-color: #adfeff;
                 }
 
                 &.active {
-                    background-color: #e0e0e0;
+                    background-color: #e1f1ed;
 
                     font-weight: bold;
                 }

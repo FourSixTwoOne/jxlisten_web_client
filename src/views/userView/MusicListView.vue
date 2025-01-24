@@ -24,7 +24,13 @@ const uploadForm = ref({
 // 取消表单
 const cancelForm = () => {
     // 重置表单
-    uploadForm.value = null;
+    uploadForm.value = {
+        title: '',
+        author: '',
+        type: '', // 1: 原创, 2: 翻唱, 3: 转载
+        audioUrl: '',
+        coverUrl: '',
+    };
     dialog.value = false;
 };
 
@@ -121,24 +127,17 @@ const handleUpdate = (updatedRow) => {
 <template>
     <el-container class="music-list-view">
         <el-header>
-            <span>音乐列表</span>
+            <el-text size="large" type="primary">歌曲列表</el-text>
+
             <div class="search-container">
                 <div class="search-label">
                     <el-icon><Search /></el-icon>歌名：
                 </div>
-                <el-input
-                    class="search-input"
-                    @input="handleSearch"
-                    v-model="pageParams.title"
-                    style="width: 60px; margin-right: 10px; height: 20px" />
+                <el-input class="search-input" @input="handleSearch" v-model="pageParams.title" />
                 <div class="search-label">
                     <el-icon><Search /></el-icon>作者：
                 </div>
-                <el-input
-                    class="search-input"
-                    @input="handleSearch"
-                    v-model="pageParams.author"
-                    style="width: 60px; margin-right: 4px; height: 20px" />
+                <el-input class="search-input" @input="handleSearch" v-model="pageParams.author" />
             </div>
             <el-button size="small" type="primary" @click="dialog = true" class="button-upload">
                 上传歌曲<el-icon class="el-icon--right"><Upload /></el-icon>
@@ -256,6 +255,7 @@ const handleUpdate = (updatedRow) => {
 </template>
 
 <style lang="scss" scoped>
+@use '@/assets/main.scss' as *;
 .music-list-view {
     $bg: rgb(92, 152, 213);
     display: flex;
@@ -276,20 +276,20 @@ const handleUpdate = (updatedRow) => {
         justify-content: space-between;
         align-items: center;
         height: auto;
+        border-bottom: $border;
+        padding: 2px 10px;
+
         .search-container {
-            margin-left: 10%;
-            flex: 2;
-            background-color: rgb(48, 82, 116);
+            margin: 0 10%;
             display: flex;
             align-items: center;
+            justify-content: center;
             font-size: 12px;
             color: #b0b4b9;
-
             .search-label {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                padding-bottom: 1px;
                 width: 60px;
             }
             .search-input {
@@ -297,7 +297,13 @@ const handleUpdate = (updatedRow) => {
             }
             .el-icon {
                 display: flex;
-                align-items: center;
+                margin-top: 2px;
+            }
+            .el-input{
+                width: 120px;
+                height: 20px;
+                margin-right: 4px;
+
             }
         }
         .button-upload {
@@ -336,6 +342,12 @@ const handleUpdate = (updatedRow) => {
     }
     .drawer__content {
         padding: 20px;
+    }
+
+    .el-footer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 }
 </style>

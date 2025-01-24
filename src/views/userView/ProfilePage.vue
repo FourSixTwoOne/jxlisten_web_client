@@ -5,6 +5,7 @@ import { uploadFileService, updateUserService } from '@/api/user.js';
 import defaultAvatar from '@/assets/default.png';
 import { EditPen, Upload, InfoFilled } from '@element-plus/icons-vue';
 
+
 const userInfo = ref({
     id: '',
     username: '',
@@ -183,13 +184,11 @@ onMounted(() => {
     </div>
 </template>
 <style lang="scss" scoped>
+@use '@/assets/main.scss' as *;
 .profile-page {
-    $border: 4px solid #403593;
     height: calc(100% - 12px);
     font-size: small;
     color: #118c98;
-    border: $border;
-    border-radius: 4px;
     padding: 2px;
     background-image: url('@/assets/BG.jpg');
     background-size: cover;
@@ -253,7 +252,8 @@ onMounted(() => {
         }
     }
     .actions {
-        border: $border;
+        border: 1px solid #ccc;
+        border-radius: 4px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;

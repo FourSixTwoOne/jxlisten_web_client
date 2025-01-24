@@ -4,47 +4,55 @@ import { ref, watch } from 'vue';
 const host = ref({ username: '房主' });
 const playlist = ref([
     {
+        type: 1,
         title: 'Song 1',
-        artist: 'Artist 1',
-        cover: '@/assets/song1.jpg',
-        duration: 240,
-        url: '@/assets/song1.mp3',
+        author: 'Artist 1',
+        coverUrl: '@/assets/song1.jpg',
+        audioUrl: '@/assets/song1.mp3',
     },
     {
         title: 'Song 2',
-        artist: 'Artist 2',
-        cover: '@/assets/song2.jpg',
-        duration: 180,
-        url: '@/assets/song2.mp3',
+        author: 'Artist 2',
+        coverUrl: '@/assets/song2.jpg',
+        audioUrl: '@/assets/song2.mp3',
     },
     {
         title: 'Song 3',
-        artist: 'Artist 3',
-        cover: '@/assets/song3.jpg',
-        duration: 210,
-        url: '@/assets/song3.mp3',
+        author: 'Artist 3',
+        coverUrl: '@/assets/song3.jpg',
+        audioUrl: '@/assets/song3.mp3',
     },
 ]);
 const currentSongIndex = ref(0);
 const currentSong = ref(playlist.value[currentSongIndex.value]);
 const isPlaying = ref(false);
-const audio = new Audio(currentSong.value.url);
+const audio = new Audio(currentSong.value.audioUrl);
 const currentTime = ref(0);
 const newMessage = ref('');
 const messages = ref([]);
+const isMember = ref(false);
+const isMusic = ref(false);
 
 // 监听当前歌曲索引变化
 watch(
     () => currentSongIndex.value,
     (newIndex) => {
         currentSong.value = playlist.value[newIndex];
-        audio.src = currentSong.value.url;
+        audio.src = currentSong.value.audioUrl;
         if (isPlaying.value) {
             audio.play();
         }
     }
 );
+const showMember = () => {
+    isMember.value = !isMember.value;
+    if (isMusic.value == true) isMusic.value = false;
+};
 
+const showMusic = () => {
+    isMusic.value = !isMusic.value;
+    if (isMember.value == true) isMember.value = false;
+};
 // 控制播放和暂停
 const togglePlay = () => {
     isPlaying.value = !isPlaying.value;
@@ -92,137 +100,138 @@ messages.value = [
 </script>
 
 <template>
-    <div class="music-room">
-        <div class="header">
-            <h1>音乐室</h1>
-            <p>房主: {{ host.username }}</p>
+    <el-container class="listening-room">
+        <el-header>
+            <div class="header">
+                <div>音乐室</div>
+                <div>房主: {{ host.username }}</div>
+            </div>
+        </el-header>
+        <div class="song-info">
+            <div>{{ currentSong?.title || '未知歌曲' }}</div>
+            ———
+            <div v-if="currentSong.type === 1">{{ currentSong.author }}</div>
+            <div v-if="currentSong.type === 2">{{ currentSong.publisher }}</div>
+            <div v-if="currentSong.type === 3">{{ currentSong.author }}</div>
         </div>
-
-        <div class="room-content">
-            <div class="chat-area">
-                <div class="messages">
+        <el-main>
+            <div class="chat-area" :class="{ hei: isMember || isMusic }">
+                <div class="other-messages">
                     <div v-for="(msg, index) in messages" :key="index" class="message">
                         <strong>{{ msg.user }}:</strong> {{ msg.content }}
                     </div>
                 </div>
-                <el-input
-                    v-model="newMessage"
-                    placeholder="输入信息…"
-                    @keyup.enter="sendMessage"></el-input>
-                <el-button type="primary" @click="sendMessage">发送</el-button>
+                <div class="send-button">
+                    <el-input
+                        v-model="newMessage"
+                        type="textarea"
+                        autosize
+                        placeholder="输入信息…"
+                        @keyup.enter="sendMessage">
+                    </el-input>
+                    <el-button type="primary" @click="sendMessage">发送</el-button>
+                </div>
             </div>
-
-            <div class="player-area">
-                <div class="player-controls">
-                    <img :src="currentSong.cover" alt="专辑封面" class="album-cover" />
-                    <div class="song-info">
-                        <h2>{{ currentSong.title }}</h2>
-                        <p>{{ currentSong.artist }}</p>
-                    </div>
-                    <div class="controls">
-                        <el-button
-                            @click="prevSong"
-                            icon="el-icon-backward"
-                            class="control-btn"></el-button>
-                        <el-button
-                            @click="togglePlay"
-                            :icon="isPlaying ? 'el-icon-pause' : 'el-icon-play'"
-                            class="control-btn"></el-button>
-                        <el-button
-                            @click="nextSong"
-                            icon="el-icon-forward"
-                            class="control-btn"></el-button>
+            <div class="muen-list">
+                <div v-if="isMember" class="member-list">
+                    成员列表
+                    <div v-if="isMember" class="member-list">
+                        <div v-for="(member, index) in members" :key="index" class="member-item">
+                            <img :src="member.avatar" alt="Member Avatar" class="member-avatar" />
+                            <div class="member-name">{{ member.name }}</div>
+                        </div>
                     </div>
                 </div>
-
-                <el-slider
-                    v-model="currentTime"
-                    :max="currentSong.duration"
-                    class="progress-bar"
-                    @change="seekSong"></el-slider>
+                <div v-if="isMusic" class="music-list">播放列表</div>
             </div>
-        </div>
-    </div>
+        </el-main>
+        <el-footer>
+            <div class="muen-area">
+                <el-button type="primary" @click="showMember">成员列表</el-button>
+                <el-button type="primary" @click="showMusic">播放列表</el-button>
+            </div>
+        </el-footer>
+    </el-container>
 </template>
 
 <style lang="scss" scoped>
-.music-room {
-    margin: 20px auto;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    padding: 20px;
+.listening-room {
+    border-radius: 4px;
 
     .header {
         text-align: center;
-        margin-bottom: 20px;
-
-        h1 {
-            margin: 0;
-        }
     }
-
-    .room-content {
+    .song-info {
+        color: #95d420;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+    }
+    .chat-area {
+        height: 99%;
+        border: 1px solid #ccc;
         display: flex;
         flex-direction: column;
-
-        .chat-area {
-            flex: 1;
-            margin-bottom: 20px;
-
-            .messages {
-                max-height: 200px;
-                overflow-y: auto;
-                margin-bottom: 10px;
-            }
-
-            .message {
-                padding: 5px;
-                border-bottom: 1px solid #eee;
-            }
+        overflow: hidden;
+        position: relative;
+        font-size: small;
+        &.hei {
+            height: calc(50% - 50px);
+        }
+        .other-messages {
+            max-width: 200px;
+            margin-bottom: 10px;
         }
 
-        .player-area {
-            .player-controls {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
+        .send-button {
+            width: 100%;
+            bottom: 0;
+            display: flex;
+            flex-direction: row;
+            position: absolute;
+        }
 
-                .album-cover {
-                    width: 60px;
-                    height: 60px;
-                    border-radius: 8px;
-                    margin-right: 15px;
-                }
+        .message {
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+    }
+    .member-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* 根据需要调整 */
+        gap: 10px; /* 列间距 */
+    }
 
-                .song-info {
-                    flex-grow: 1;
+    .member-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 5px;
+    }
 
-                    h2 {
-                        margin: 0;
-                        font-size: 18px;
-                    }
+    .member-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
 
-                    p {
-                        margin: 5px 0 0;
-                        font-size: 14px;
-                        color: #666;
-                    }
-                }
+    .member-name {
+        margin-top: 5px;
+        font-size: 14px;
+        text-align: center;
+    }
 
-                .controls {
-                    display: flex;
-
-                    .control-btn {
-                        margin: 0 5px;
-                    }
-                }
-            }
-
-            .progress-bar {
-                margin: 20px 0;
-            }
+    .el-footer {
+        width: 100%;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        .el-button {
+            height: 30px;
         }
     }
 }

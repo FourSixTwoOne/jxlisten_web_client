@@ -26,8 +26,11 @@ const toggleProfile = () => {
 };
 
 const changeContent = (view) => {
-    viewName.value = view;
-    isThreeVisible.value = true;
+    if (viewName.value === view) isThreeVisible.value = !isThreeVisible.value;
+    else {
+        isThreeVisible.value = true;
+        viewName.value = view;
+    }
 };
 
 // 登出函数
@@ -153,7 +156,7 @@ const changeView = (view) => {
                     <button class="close-button" @click="closeThreeContainer">×</button>
                     <ThreeContainer :viewName="viewName" :key="viewName" />
                 </div>
-                <div class="profile" v-if="isProfileVisible" :class="{ visible: isProfileVisible }">
+                <div class="profile" v-if="isProfileVisible">
                     <ProfilePage @close="closeProfile" @action-selected="changeView" />
                 </div>
             </el-main>
@@ -166,6 +169,7 @@ const changeView = (view) => {
 </template>
 
 <style lang="scss" scoped>
+@use '@/assets/main.scss' as *;
 .layout-container {
     height: 100vh;
     width: 100%;
@@ -174,13 +178,11 @@ const changeView = (view) => {
     background-image: url('@/assets/BG.jpg');
     background-size: cover;
     background-position: center;
-    $border: 4px solid #403593;
 
     .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background-color: rgba(74, 58, 111, 0.724);
         height: 35px;
 
         .controls-butoons {
@@ -232,6 +234,7 @@ const changeView = (view) => {
                 height: 30px;
                 width: 30px;
                 margin-right: 10px;
+                object-fit: contain;
             }
 
             .user-avatar {
@@ -267,6 +270,7 @@ const changeView = (view) => {
             .el-menu-item {
                 display: flex;
                 height: 10%;
+                width: 100%;
                 flex-direction: column;
                 padding: 2px;
             }
@@ -298,6 +302,7 @@ const changeView = (view) => {
         .two-column {
             width: 100%;
             border-left: $border;
+            border-right: $border;
             overflow-y: auto; // 添加滚动条
 
             &.shrink {
@@ -309,21 +314,16 @@ const changeView = (view) => {
         }
         .three-container {
             display: flex;
-            flex: auto;
-            border-left: $border;
-            &.shrink {
-                flex: 0 0 200px;
-            }
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 400px;
             position: relative;
             .close-button {
                 position: absolute;
-                top: 10px;
-                right: 10px;
                 background: none;
-                border: none;
-                font-size: 25px;
-                color: rgb(234, 223, 12);
-                cursor: pointer;
+                border: 1px solid rgb(129, 129, 129);
+                font-size: 20px;
+                color: rgb(129, 129, 129);
                 z-index: 1;
             }
         }
@@ -336,7 +336,8 @@ const changeView = (view) => {
     }
     .footer {
         height: 25px;
-        padding: 1px;
+        padding-bottom: 1px;
+        margin-bottom: 20px;
         text-align: center;
         font-size: 12px;
         color: #7d5224;
