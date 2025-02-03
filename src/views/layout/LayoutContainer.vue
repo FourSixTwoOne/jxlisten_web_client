@@ -13,6 +13,7 @@ const userStore = useUserStore();
 const isProfileVisible = ref(false);
 const isThreeVisible = ref(false);
 const viewName = ref('music'); // music:'音乐', room:'音乐室', friend:'好友列表'，collect:'我的收藏', record:'浏览记录', upload:'我的上传'
+const viewId = ref(0);
 
 // 计算属性获取用户信息
 const user = computed(() => userStore.user);
@@ -47,11 +48,14 @@ const closeThreeContainer = () => {
 };
 
 // 切换视图方法
-const changeView = (view) => {
-    viewName.value = view;
+const changeView = (params) => {
+    if(params[0] === 'friend') viewId.value = params[1];
+    viewName.value = params[0];
     isThreeVisible.value = true;
-    console.log('切换视图成功！', view);
+    console.log('切换视图成功！', params[0], viewId.value);
 };
+
+
 
 onMounted(() => {
     songStore.initAudio();
@@ -160,10 +164,12 @@ onUnmounted(() => {
                 </div>
                 <div class="three-container" v-if="isThreeVisible">
                     <button class="close-button" @click="closeThreeContainer">×</button>
-                    <ThreeContainer :viewName="viewName" :key="viewName" />
+                    <ThreeContainer :params="{ userId: viewId }" :viewName="viewName" :key="`${viewName}-${viewId}`"/>
                 </div>
                 <div class="profile" v-if="isProfileVisible">
-                    <ProfilePage @close="closeProfile" @action-selected="changeView" />
+                    <ProfilePage
+                        @close="closeProfile"
+                        @action-selected="changeView" />
                 </div>
             </el-main>
 

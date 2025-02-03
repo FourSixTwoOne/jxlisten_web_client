@@ -1,4 +1,12 @@
+<script setup>
+const porp = defineProps({
+    userId: {
+        type: Number,
+       
+    },
+});
+</script>
+
 <template>
-    <page-container title="">
-    </page-container>
+    <div class="friend-view">好友id: {{ porp.userId }}</div>
 </template>

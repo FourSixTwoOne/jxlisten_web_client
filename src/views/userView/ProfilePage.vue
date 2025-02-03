@@ -7,7 +7,7 @@ import { EditPen, Upload, InfoFilled, Search, Plus } from '@element-plus/icons-v
 import AvatarView from '@/components/AvatarView.vue';
 
 const userInfo = ref({
-    id: '',
+    userId: '',
     username: '',
     image: '',
     gender: 0,
@@ -16,7 +16,7 @@ const userInfo = ref({
 });
 
 const friendList = ref([]);
-const emit = defineEmits(['action-selected']);
+const emit = defineEmits(['action-selected', 'params']);
 const userStore = useUserStore();
 const isEditing = ref(false);
 const imageFile = ref(null);
@@ -44,7 +44,7 @@ const submitProfile = async () => {
             const res = await uploadFileService(formData);
             userInfo.value.image = res.data.data;
         }
-        userInfo.value.id = userStore.user.id;
+        userInfo.value.userId = userStore.user.userId;
         await updateUserService(userInfo.value);
         await getUser();
         isEditing.value = false;
@@ -62,7 +62,12 @@ const toggleFriendsList = () => {
 };
 
 const handleAction = (action) => {
-    emit('action-selected', action);
+    emit('action-selected', [action]);
+};
+
+const toggleFriendProfile = (action, userId) => {
+    console.log('显示好友主页', action, userId);
+    emit('action-selected', [action, userId]);
 };
 
 const buttonProps = {
@@ -89,19 +94,19 @@ const getFriends = async () => {
     // }
     friendList.value = [
         {
-            id: 1,
+            userId: 1,
             username: 'John Doe',
             image: 'https://via.placeholder.com/150',
             isOnline: true,
         },
         {
-            id: 2,
+            userId: 2,
             username: 'Jane Smith',
             image: 'https://via.placeholder.com/150',
             isOnline: false,
         },
         {
-            id: 3,
+            userId: 3,
             username: 'Mike Brown',
             image: 'https://via.placeholder.com/150',
             isOnline: true,
@@ -122,7 +127,7 @@ const handleSearch = debounce(async () => {
         // searchResults.value= await userStore.
         searchResults.value = [
             {
-                id: 1,
+                userId: 1,
                 username: 'John Doe',
                 image: 'https://via.placeholder.com/150',
                 isOnline: true,
@@ -260,7 +265,7 @@ onMounted(() => {
                             <ul v-if="searchKeyword && searchResults.length">
                                 <li
                                     v-for="user in searchResults"
-                                    :key="user.id"
+                                    :key="user.userId"
                                     class="result-item">
                                     <div class="friend-info">
                                         <AvatarView :imageUrl="user.avatar" class="friend-avatar" />
@@ -271,7 +276,7 @@ onMounted(() => {
                                         circle
                                         size="small"
                                         :icon="Plus"
-                                        @click="addFriend(user.id)" />
+                                        @click="addFriend(user.userId)" />
                                 </li>
                             </ul>
 
@@ -279,8 +284,9 @@ onMounted(() => {
                             <ul v-else class="friend-list">
                                 <li
                                     v-for="friend in friendList"
-                                    :key="friend.id"
-                                    class="friend-item">
+                                    :key="friend.userId"
+                                    class="friend-item"
+                                    @click="toggleFriendProfile('friend', friend.userId)">
                                     <div class="friend-info">
                                         <AvatarView
                                             :imageUrl="friend.avatar"
@@ -350,12 +356,6 @@ onMounted(() => {
         .transparent-input {
             opacity: 0.8;
         }
-    }
-
-    .avatar {
-        width: 70px;
-        height: 70px;
-        object-fit: cover;
     }
 
     .edit-button {
@@ -447,6 +447,7 @@ onMounted(() => {
                 li {
                     display: flex;
                     align-items: center;
+                    cursor: pointer;
                     justify-content: space-between;
 
                     &:hover {

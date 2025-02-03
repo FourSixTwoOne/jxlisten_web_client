@@ -5,11 +5,17 @@ import Favorite from '@/views/otherView/FavoriteView.vue';
 import Record from '@/views/otherView/RecordView.vue';
 import Upload from '@/views/otherView/MyUploadView.vue';
 import Room from '@/views/otherView/ListeningRoom.vue';
+import friend from '@/views/otherView/FriendView.vue';
 
 const props = defineProps({
     viewName: {
         type: String,
         default: 'music',
+    },
+    // 新增动态参数
+    params: {
+        type: Object,
+        default: () => ({}),
     },
 });
 
@@ -25,14 +31,17 @@ const currentComponent = computed(() => {
             return Upload;
         case 'room':
             return Room;
+        case 'friend':
+            return friend;
         default:
-            return Music; // 默认视图
+            return Music;
     }
 });
 </script>
 
 <template>
     <div class="three-container">
-        <component :is="currentComponent"></component>
+        <!-- 传递动态参数到组件 -->
+        <component :is="currentComponent" v-bind="params"></component>
     </div>
 </template>
