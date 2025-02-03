@@ -144,7 +144,7 @@ const addSong = (song) => {
                 <div class="search-label">
                     <el-icon><Search /></el-icon>作者：
                 </div>
-                <el-input class="search-in put" @input="handleSearch" v-model="pageParams.author" />
+                <el-input class="search-input" @input="handleSearch" v-model="pageParams.author" />
             </div>
             <el-button size="small" type="primary" @click="dialog = true" class="button-upload">
                 上传歌曲<el-icon class="el-icon--right"><Upload /></el-icon>
