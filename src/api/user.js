@@ -14,7 +14,7 @@ export const loginUserService = ({ username, password }) =>
 //     console.log('loginUserService called with:', { username, password });
 // };
 
-// 获取用户信息
+// 获取当前用户信息
 export const getUserService = () => request.get('/user/user/info');
 // export const getUserService = () => {
 //     console.log('getUserService called');

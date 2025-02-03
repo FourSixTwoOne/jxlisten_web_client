@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { debounce } from 'lodash-es';
 import { useUserStore } from '@/stores';
 import { uploadFileService, updateUserService } from '@/api/user.js';
-import { EditPen, Upload, InfoFilled } from '@element-plus/icons-vue';
-import CoverView from '@/components/AvatarView.vue';
+import { EditPen, Upload, InfoFilled, Search, Plus } from '@element-plus/icons-vue';
 import AvatarView from '@/components/AvatarView.vue';
 
 const userInfo = ref({
@@ -15,33 +15,15 @@ const userInfo = ref({
     bio: '',
 });
 
-const friendList = ref([
-    {
-        id: 1,
-        username: 'John Doe',
-        image: 'https://via.placeholder.com/150',
-        isOnline: true,
-    },
-    {
-        id: 2,
-        username: 'Jane Smith',
-        image: 'https://via.placeholder.com/150',
-        isOnline: false,
-    },
-    {
-        id: 3,
-        username: 'Mike Brown',
-        image: 'https://via.placeholder.com/150',
-        isOnline: true,
-    },
-]);
-
+const friendList = ref([]);
 const emit = defineEmits(['action-selected']);
 const userStore = useUserStore();
 const isEditing = ref(false);
 const imageFile = ref(null);
 const isLoading = ref(false); // 添加加载状态
-
+const searchResults = ref([]);
+const searchKeyword = ref('');
+const isLoadingSearch = ref(false);
 const isFriendsVisible = ref(false);
 // 切换编辑状态
 const editProfile = () => {
@@ -97,14 +79,89 @@ const getUser = async () => {
 onMounted(() => {
     getUser();
 });
+
+// 获取初始好友列表
+const getFriends = async () => {
+    // try {
+    //     friendList.value = res.data;
+    // } catch (error) {
+    //     ElMessage.error('获取好友列表失败');
+    // }
+    friendList.value = [
+        {
+            id: 1,
+            username: 'John Doe',
+            image: 'https://via.placeholder.com/150',
+            isOnline: true,
+        },
+        {
+            id: 2,
+            username: 'Jane Smith',
+            image: 'https://via.placeholder.com/150',
+            isOnline: false,
+        },
+        {
+            id: 3,
+            username: 'Mike Brown',
+            image: 'https://via.placeholder.com/150',
+            isOnline: true,
+        },
+    ];
+};
+
+// 带防抖的搜索方法
+const handleSearch = debounce(async () => {
+    if (!searchKeyword.value.trim()) {
+        searchResults.value = [];
+        return;
+    }
+
+    isLoadingSearch.value = true;
+    try {
+        ElMessage.info('正在搜索...');
+        // searchResults.value= await userStore.
+        searchResults.value = [
+            {
+                id: 1,
+                username: 'John Doe',
+                image: 'https://via.placeholder.com/150',
+                isOnline: true,
+            },
+        ];
+    } finally {
+        isLoadingSearch.value = false;
+    }
+}, 500);
+
+// 添加好友方法
+const addFriend = async (userId) => {
+    try {
+        ElMessageBox.confirm('确定要添加好友吗？', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning',
+        })
+            .then(async () => {
+                await addFriend(userId);
+            })
+            .catch(() => {
+                ElMessage.info('已取消添加好友');
+            });
+    } catch (error) {
+        ElMessage.error('操作失败');
+    }
+};
+
+// 初始化获取好友列表
+onMounted(() => {
+    getFriends();
+});
 </script>
 
 <template>
     <div class="profile-page">
         <div v-if="!isEditing" class="profile-header">
-            <div class="avatar-container">
-                <CoverView />
-            </div>
+            <AvatarView :imageUrl="userInfo?.image" class="avatar-container" />
             <div class="user-info">
                 <p>用户：{{ userInfo?.username }}</p>
                 <p>
@@ -182,24 +239,71 @@ onMounted(() => {
             </el-popconfirm>
         </div>
         <div class="actions">
-            <el-button v-bind="buttonProps" @click="toggleFriendsList">好友列表</el-button>
-            <!-- 展开好友列表 -->
-            <div v-if="isFriendsVisible" class="friend-list">
-                <ul>
-                    <li v-for="(friend, index) in friendList" :key="index" class="friend-item">
-                        <div class="friend-avatar">
-                            <AvatarView :imageUrl="friend.avatar" />
+            <div>
+                <el-button v-bind="buttonProps" @click="toggleFriendsList">好友列表</el-button>
+                <div v-if="isFriendsVisible" class="friend-search-container">
+                    <el-input
+                        v-model="searchKeyword"
+                        placeholder="输入昵称搜索用户"
+                        :prefix-icon="Search"
+                        clearable
+                        @input="handleSearch" />
+
+                    <div class="search-results">
+                        <div v-if="isLoadingSearch" class="loading-container">
+                            <el-icon class="is-loading"><Loading /></el-icon>
+                            搜索中...
                         </div>
-                        <div class="friend-name">
-                            {{ friend.username }}
-                        </div>
-                        <div
-                            class="friend-status"
-                            :class="{ online: friend.isOnline, offline: !friend.isOnline }"></div>
-                    </li>
-                </ul>
+
+                        <template v-else>
+                            <!-- 显示搜索结果 -->
+                            <ul v-if="searchKeyword && searchResults.length">
+                                <li
+                                    v-for="user in searchResults"
+                                    :key="user.id"
+                                    class="result-item">
+                                    <div class="friend-info">
+                                        <AvatarView :imageUrl="user.avatar" class="friend-avatar" />
+                                        <span class="username">{{ user.username }}</span>
+                                    </div>
+                                    <el-button
+                                        class="add-button"
+                                        circle
+                                        size="small"
+                                        :icon="Plus"
+                                        @click="addFriend(user.id)" />
+                                </li>
+                            </ul>
+
+                            <!-- 显示好友列表 -->
+                            <ul v-else class="friend-list">
+                                <li
+                                    v-for="friend in friendList"
+                                    :key="friend.id"
+                                    class="friend-item">
+                                    <div class="friend-info">
+                                        <AvatarView
+                                            :imageUrl="friend.avatar"
+                                            class="friend-avatar" />
+                                        <div class="info">
+                                            <span class="username">{{ friend.username }}</span>
+                                            <div class="status">
+                                                <div
+                                                    class="status-dot"
+                                                    :class="{ online: friend.isOnline }" />
+                                                <span>{{ friend.isOnline ? '在线' : '离线' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </template>
+                    </div>
+                </div>
             </div>
-            <el-button v-bind="buttonProps" @click="handleAction('favorites')" class="f-btn">收藏歌曲</el-button>
+            <el-button v-bind="buttonProps" @click="handleAction('favorites')" class="f-btn"
+                >收藏歌曲</el-button
+            >
             <el-dropdown split-button size="small" color="#a0a20a" @click="handleAction('history')">
                 <div>历史记录</div>
                 <template #dropdown>
@@ -295,7 +399,7 @@ onMounted(() => {
         display: flex;
         flex-direction: column;
 
-        .f-btn{
+        .f-btn {
             margin-left: 0;
         }
 
@@ -304,39 +408,99 @@ onMounted(() => {
             width: 103px;
             margin-bottom: 3px;
         }
-        .friend-list {
-            height: 100%;
-            overflow-y: auto;
-            ul {
-                list-style-type: none;
-                padding: 0;
+        .friend-search-container {
+            .el-input {
+                height: 20px;
+                border-bottom: $border2;
+                border-top: $border2;
             }
-            .friend-item {
+
+            .search-results {
+                max-height: 295px;
+                overflow-y: auto;
+                border: $border2;
+                border-radius: 4px;
+                margin-top: 4px;
+
+                .loading-container {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #666;
+
+                    .el-icon {
+                        margin-right: 8px;
+                        animation: rotating 2s linear infinite;
+                    }
+                }
+                .add-button {
+                    width: 20px;
+                    height: 20px;
+                }
+            }
+
+            ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+
+                li {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+
+                    &:hover {
+                        background: #21375a;
+                    }
+
+                    & + li {
+                        border-top: 1px solid #5a83c5;
+                    }
+                }
+            }
+
+            .friend-info {
                 display: flex;
                 align-items: center;
-                justify-content: space-between;
-                padding: 5px 0;
-                border-bottom: 1px solid #ccc;
+                gap: 12px;
+
+                .friend-avatar {
+                    width: 30px;
+                    height: 30px;
+                }
+
+                .username {
+                    font-weight: 500;
+                    color: #303133;
+                }
+
+                .status {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 12px;
+                    color: #909399;
+
+                    &-dot {
+                        width: 8px;
+                        height: 8px;
+                        border-radius: 50%;
+                        background: #909399;
+
+                        &.online {
+                            background: #67c23a;
+                        }
+                    }
+                }
             }
-            .friend-avatar {
-                width: 30px;
-                height: 30px;
-                margin-right: 10px;
+        }
+
+        @keyframes rotating {
+            from {
+                transform: rotate(0deg);
             }
-            .friend-name {
-                flex-grow: 1;
-            }
-            .friend-status {
-                width: 10px;
-                height: 10px;
-                border-radius: 50%;
-                background-color: gray; // 默认为离线状态
-            }
-            .friend-status.online {
-                background-color: green; // 在线状态
-            }
-            .friend-status.offline {
-                background-color: gray; // 离线状态
+            to {
+                transform: rotate(360deg);
             }
         }
     }
