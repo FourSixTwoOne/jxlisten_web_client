@@ -1,14 +1,14 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useUserStore } from '@/stores';
-import ProfilePage from '@/views/userView/ProfilePage.vue'; // 个人主页组件
-import logo from '@/assets/logo-192x192.png'; // 应用 logo
-import nameLogo from '@/assets/juexianlisten.png'; // 应用名称 logo
-import defaultAvatar from '@/assets/default.png';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useUserStore, useSongStore } from '@/stores';
+import ProfilePage from '@/views/userView/ProfilePage.vue';
+import logo from '@/assets/logo-192x192.png';
+import nameLogo from '@/assets/juexianlisten.png';
 import { Headset, HomeFilled } from '@element-plus/icons-vue';
 import ThreeContainer from '@/views/component/ThreeContainer.vue';
 import router from '@/router';
-
+import CoverView from '@/components/AvatarView.vue';
+const songStore = useSongStore();
 const userStore = useUserStore();
 const isProfileVisible = ref(false);
 const isThreeVisible = ref(false);
@@ -17,26 +17,23 @@ const viewName = ref('music'); // music:'音乐', room:'音乐室', friend:'好�
 // 计算属性获取用户信息
 const user = computed(() => userStore.user);
 
-onMounted(() => {
-    user.value = userStore.user.value;
-});
 // 切换个人界面的可见性
 const toggleProfile = () => {
     isProfileVisible.value = !isProfileVisible.value;
 };
 
+// 视图切换优化
 const changeContent = (view) => {
-    if (viewName.value === view) isThreeVisible.value = !isThreeVisible.value;
-    else {
-        isThreeVisible.value = true;
-        viewName.value = view;
-    }
+    const isSameView = viewName.value === view;
+    viewName.value = view;
+    isThreeVisible.value = !isSameView || !isThreeVisible.value;
 };
 
 // 登出函数
 const logout = () => {
     userStore.removeToken();
     userStore.setUser(null);
+    songStore.clean();
     router.push('/login');
 };
 
@@ -52,12 +49,21 @@ const closeThreeContainer = () => {
 // 切换视图方法
 const changeView = (view) => {
     viewName.value = view;
+    isThreeVisible.value = true;
     console.log('切换视图成功！', view);
 };
+
+onMounted(() => {
+    songStore.initAudio();
+});
+
+onUnmounted(() => {
+    songStore.clean();
+});
 </script>
 
 <template>
-    <el-watermark :font="font" :content="['陆2壹', '绝弦juexianlisten']">
+    <el-watermark :content="['陆2壹', '绝弦juexianlisten']">
         <div class="layout-container">
             <el-header class="header">
                 <div class="logo-section">
@@ -93,11 +99,11 @@ const changeView = (view) => {
                         <span v-else
                             ><strong>{{ user?.username || '未知用户' }}</strong></span
                         >
+                        <div class="avatar-container">
+                            <CoverView :imageUrl="user?.avatar" @click="toggleProfile" />
+                        </div>
                     </div>
-                    <el-avatar
-                        class="user-avatar"
-                        @click="toggleProfile"
-                        :src="user?.image || defaultAvatar" />
+
                     <el-button type="danger" size="small" class="logout-btn" @click="logout"
                         >登出</el-button
                     >
@@ -225,24 +231,19 @@ const changeView = (view) => {
             align-items: center;
 
             .user-info {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 10px;
                 margin-right: 10px;
                 font-size: 12px;
                 color: rgb(47, 222, 137);
             }
-
-            .el-avatar {
+            .avatar-container {
+                cursor: pointer;
                 height: 30px;
                 width: 30px;
-                margin-right: 10px;
-                object-fit: contain;
             }
-
-            .user-avatar {
-                cursor: pointer;
-                margin-right: 10px;
-                padding: 5px;
-            }
-
             .logout-btn {
                 background-color: #f56c6c;
                 color: white;
@@ -328,7 +329,7 @@ const changeView = (view) => {
             }
         }
         .profile {
-            width: 260px;
+            width: 300px;
             height: 100%;
             background-color: rgb(4, 36, 60);
             overflow-y: auto; // 添加滚动条

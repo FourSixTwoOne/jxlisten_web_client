@@ -2,9 +2,9 @@
 import { ref, onMounted } from 'vue';
 import { useUserStore } from '@/stores';
 import { uploadFileService, updateUserService } from '@/api/user.js';
-import defaultAvatar from '@/assets/default.png';
 import { EditPen, Upload, InfoFilled } from '@element-plus/icons-vue';
-
+import CoverView from '@/components/AvatarView.vue';
+import AvatarView from '@/components/AvatarView.vue';
 
 const userInfo = ref({
     id: '',
@@ -14,6 +14,27 @@ const userInfo = ref({
     age: 0,
     bio: '',
 });
+
+const friendList = ref([
+    {
+        id: 1,
+        username: 'John Doe',
+        image: 'https://via.placeholder.com/150',
+        isOnline: true,
+    },
+    {
+        id: 2,
+        username: 'Jane Smith',
+        image: 'https://via.placeholder.com/150',
+        isOnline: false,
+    },
+    {
+        id: 3,
+        username: 'Mike Brown',
+        image: 'https://via.placeholder.com/150',
+        isOnline: true,
+    },
+]);
 
 const emit = defineEmits(['action-selected']);
 const userStore = useUserStore();
@@ -82,7 +103,7 @@ onMounted(() => {
     <div class="profile-page">
         <div v-if="!isEditing" class="profile-header">
             <div class="avatar-container">
-                <img :src="userInfo?.image || defaultAvatar" alt="用户头像" class="avatar" />
+                <CoverView />
             </div>
             <div class="user-info">
                 <p>用户：{{ userInfo?.username }}</p>
@@ -125,8 +146,6 @@ onMounted(() => {
                 :rows="2"
                 type="textarea"
                 :autosize="{ minRows: 1, maxRows: 3 }"
-                maxlength="50"
-                show-word-limit
                 v-model="userInfo.bio"
                 placeholder="暂无个人简介" />
         </div>
@@ -134,6 +153,8 @@ onMounted(() => {
             <el-input
                 class="transparent-input"
                 type="textarea"
+                maxlength="50"
+                show-word-limit
                 v-model="userInfo.bio"
                 placeholder="输入个人简介" />
         </div>
@@ -150,21 +171,37 @@ onMounted(() => {
                 @confirm="submitProfile"
                 @cancel="cancelEvent">
                 <template #reference>
-                    <el-button v-if="isEditing" type="warning" plain text :loading="isLoading">
-                        点击进行提交 <el-icon><Upload /></el-icon>
-                    </el-button>
+                    <div>
+                        <!-- 添加一个单一的根元素 -->
+                        <el-button v-if="isEditing" type="warning" plain text :loading="isLoading">
+                            点击进行提交 <el-icon><Upload /></el-icon>
+                        </el-button>
+                    </div>
+                    <!-- 结束单一的根元素 -->
                 </template>
             </el-popconfirm>
         </div>
         <div class="actions">
             <el-button v-bind="buttonProps" @click="toggleFriendsList">好友列表</el-button>
             <!-- 展开好友列表 -->
-            <div v-if="isFriendsVisible">
-                <p>好友展示区域</p>
-                <!-- 在这里添加友人展示的具体内容 -->
+            <div v-if="isFriendsVisible" class="friend-list">
+                <ul>
+                    <li v-for="(friend, index) in friendList" :key="index" class="friend-item">
+                        <div class="friend-avatar">
+                            <AvatarView :imageUrl="friend.avatar" />
+                        </div>
+                        <div class="friend-name">
+                            {{ friend.username }}
+                        </div>
+                        <div
+                            class="friend-status"
+                            :class="{ online: friend.isOnline, offline: !friend.isOnline }"></div>
+                    </li>
+                </ul>
             </div>
+            <el-button v-bind="buttonProps" @click="handleAction('favorites')" class="f-btn">收藏歌曲</el-button>
             <el-dropdown split-button size="small" color="#a0a20a" @click="handleAction('history')">
-                历史记录
+                <div>历史记录</div>
                 <template #dropdown>
                     <el-dropdown-menu>
                         <el-dropdown-item @click="handleAction('record-upload')"
@@ -179,7 +216,6 @@ onMounted(() => {
                     </el-dropdown-menu>
                 </template>
             </el-dropdown>
-            <el-button v-bind="buttonProps" @click="handleAction('favorites')">收藏歌曲</el-button>
         </div>
     </div>
 </template>
@@ -200,7 +236,8 @@ onMounted(() => {
     }
 
     .avatar-container {
-        position: relative;
+        height: 80px;
+        width: 80px;
     }
 
     .bio-container {
@@ -252,15 +289,55 @@ onMounted(() => {
         }
     }
     .actions {
-        border: 1px solid #ccc;
+        height: 400px;
+        border: $border2;
         border-radius: 4px;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+
+        .f-btn{
+            margin-left: 0;
+        }
+
         .el-dropdown,
         .el-button {
             width: 103px;
-            margin-bottom: 30px;
+            margin-bottom: 3px;
+        }
+        .friend-list {
+            height: 100%;
+            overflow-y: auto;
+            ul {
+                list-style-type: none;
+                padding: 0;
+            }
+            .friend-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 5px 0;
+                border-bottom: 1px solid #ccc;
+            }
+            .friend-avatar {
+                width: 30px;
+                height: 30px;
+                margin-right: 10px;
+            }
+            .friend-name {
+                flex-grow: 1;
+            }
+            .friend-status {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background-color: gray; // 默认为离线状态
+            }
+            .friend-status.online {
+                background-color: green; // 在线状态
+            }
+            .friend-status.offline {
+                background-color: gray; // 离线状态
+            }
         }
     }
 }

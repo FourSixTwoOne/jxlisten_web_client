@@ -6,6 +6,7 @@ const isLoading = ref(false);
 const total = ref(2);
 const dialog = ref(false);
 const coverFile = ref(null);
+const formLabelWidth = ref('80px');
 const pageParams = ref({
     page: 1,
     pageSize: 10,
@@ -158,7 +159,7 @@ const onClick = async () => {
                 <el-table-column label="创建时间" prop="uploadTime" />
                 <el-table-column label="操作" align="center" width="auto">
                     <template>
-                        <el-button size="small" type="text">加入</el-button>
+                        <el-button size="small">加入</el-button>
                     </template>
                 </el-table-column>
 

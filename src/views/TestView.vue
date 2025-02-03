@@ -13,10 +13,17 @@ const test = () => {
     console.log('user:::', user1);
 
 }
+const audio = new Audio();
+audio.src = 'http://localhost:5173/src/assets/music/小城夏天 - LBI利比.mp3';
 </script>
 
 <template>
     <div class="test-view">
         <el-button @click="test">test</el-button>
+    </div>
+    <div>
+        <button @click="audio.play()">播放</button>
+        <button @click="audio.pause()">暂停</button>
+        <el-slider v-model="audio.currentTime"></el-slider>
     </div>
 </template>

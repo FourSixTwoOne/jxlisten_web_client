@@ -1,5 +1,5 @@
 <script setup>
-import { ref, defineProps, computed } from 'vue';
+import { ref, computed } from 'vue';
 import { Plus } from '@element-plus/icons-vue'; // 引入图标
 
 const props = defineProps({

@@ -1,0 +1,13 @@
+<template>
+    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+        <path
+            fill="currentColor"
+            d="M14.4 22L13 20.6l2.6-2.6l-2.6-2.6l1.4-1.4l2.6 2.6l2.6-2.6l1.4 1.4l-2.6 2.6l2.6 2.6l-1.4 1.4l-2.6-2.6zM3 16v-2h7v2zm0-4v-2h11v2zm0-4V6h11v2z" />
+    </svg>
+</template>
+
+<script>
+export default {
+    name: 'MaterialSymbolsPlaylistRemove',
+};
+</script>

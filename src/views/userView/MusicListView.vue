@@ -1,18 +1,21 @@
 <script setup>
 import { ref } from 'vue';
-import { Search, Upload } from '@element-plus/icons-vue';
+import { Search, Upload, Plus } from '@element-plus/icons-vue';
 import defaultCoverUrl from '@/assets/apple-touch-icon.png';
 import CustomPagination from '@/components/CustomPagination.vue';
 import CUploader from '@/components/CUploader.vue';
 import { uploadFileService } from '@/api/user';
 import { uploadMusicService } from '@/api/music';
+import { useSongStore } from '@/stores';
 
+const songStore = useSongStore();
 const isLoading = ref(false);
 const total = ref(2);
 const dialog = ref(false);
+const formLabelWidth = ref('80px');
 const coverFile = ref(null);
 const musicFile = ref(null);
-
+const loading = ref(false);
 const uploadForm = ref({
     title: '',
     author: '',
@@ -33,7 +36,6 @@ const cancelForm = () => {
     };
     dialog.value = false;
 };
-
 // 处理关闭
 const handleClose = () => {
     cancelForm();
@@ -117,10 +119,15 @@ const handleQuery = async () => {
 };
 
 const handleUpdate = (updatedRow) => {
+    // TODO: 查询该歌曲的信息，更新到musicList中
     const index = musicList.value.findIndex((item) => item.musicId === updatedRow.musicId);
     if (index !== -1) {
         musicList.value[index] = { ...musicList.value[index], ...updatedRow };
     }
+};
+
+const addSong = (song) => {
+    songStore.addSong(song);
 };
 </script>
 
@@ -137,7 +144,7 @@ const handleUpdate = (updatedRow) => {
                 <div class="search-label">
                     <el-icon><Search /></el-icon>作者：
                 </div>
-                <el-input class="search-input" @input="handleSearch" v-model="pageParams.author" />
+                <el-input class="search-in put" @input="handleSearch" v-model="pageParams.author" />
             </div>
             <el-button size="small" type="primary" @click="dialog = true" class="button-upload">
                 上传歌曲<el-icon class="el-icon--right"><Upload /></el-icon>
@@ -187,7 +194,7 @@ const handleUpdate = (updatedRow) => {
                     </el-form>
                 </div>
             </el-drawer>
-            <el-table class="music-list" :data="musicList" v-loading="isLoading">
+            <el-table class="music-list" :data="musicList" :loading="isLoading">
                 <el-table-column label="封面" align="center">
                     <template #default="scope">
                         <img
@@ -227,9 +234,16 @@ const handleUpdate = (updatedRow) => {
                 <el-table-column label="发布者" prop="publisherId" />
                 <el-table-column label="作者" prop="author" />
                 <el-table-column label="上传时间" prop="uploadTime" />
-                <el-table-column label="播放" align="center" width="auto">
+                <el-table-column label="播放" align="center">
                     <template #default="scope">
-                        <MusicPlayerIcon :row="scope.row"></MusicPlayerIcon>
+                        <div class="music-operation">
+                            <MusicPlayerIcon :row="scope.row"></MusicPlayerIcon>
+                            <el-button
+                                type="primary"
+                                size="small"
+                                :icon="Plus"
+                                @click="addSong(scope.row)" />
+                        </div>
                     </template>
                 </el-table-column>
                 <el-table-column label="操作" align="center">
@@ -299,11 +313,10 @@ const handleUpdate = (updatedRow) => {
                 display: flex;
                 margin-top: 2px;
             }
-            .el-input{
+            .el-input {
                 width: 120px;
                 height: 20px;
                 margin-right: 4px;
-
             }
         }
         .button-upload {
@@ -320,6 +333,13 @@ const handleUpdate = (updatedRow) => {
             padding: 0;
             margin: 0;
             background-color: $bg;
+        }
+
+        .music-operation {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            gap: 4px;
         }
 
         .el-tag {

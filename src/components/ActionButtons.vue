@@ -1,5 +1,4 @@
 <script setup>
-import { defineProps, defineEmits } from 'vue';
 import { Star, WarnTriangleFilled } from '@element-plus/icons-vue';
 import BxLike from '@/components/icons/BxLikeSVG.vue';
 import AddIcon from '@/components/icons/AddSVG.vue';
@@ -54,8 +53,8 @@ const addOrJion = () => {
                 size="small"
                 :icon="BxLike"
                 @click="handleLike"
-                :class="{ liked: props.row.isLiked }">
-                <span>{{ props.row.likeCount || 0 }}</span>
+                :class="{ liked: props.row?.isLiked }">
+                <span>{{ props.row?.likeCount || 0 }}</span>
             </el-button>
         </el-tooltip>
 
@@ -64,8 +63,8 @@ const addOrJion = () => {
                 size="small"
                 @click="handleCollect"
                 :icon="Star"
-                :class="{ collected: props.row.isCollected }">
-                <span>{{ props.row.collectCount || 0 }}</span>
+                :class="{ collected: props.row?.isCollected }">
+                <span>{{ props.row?.collectCount || 0 }}</span>
             </el-button>
         </el-tooltip>
 
