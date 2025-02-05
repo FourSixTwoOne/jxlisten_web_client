@@ -38,8 +38,7 @@ export const useSongStore = defineStore(
                 publisher: '发布者1',
                 author: '作者1',
                 uploadTime: '2023-10-01',
-                audioUrl:
-                    'http://localhost:5173/src/assets/music/小城谣 - Vk.mp3',
+                audioUrl: 'http://localhost:5173/src/assets/music/小城谣 - Vk.mp3',
                 type: 1, // 1: 原创, 2: 翻唱, 3: 转载
                 likeCount: 0,
                 collectCount: 0,
@@ -114,8 +113,10 @@ export const useSongStore = defineStore(
         const cleanup = () => {
             console.log('清理音频事件监听和音频实例');
             if (audio.value) {
-                removeAudioListeners();
-                audio.value.pause();
+                if (audio.value instanceof Audio) {
+                    removeAudioListeners();
+                    audio.value.pause();
+                }
                 audio.value = null; // 清空音频实例
             }
             isPlaying.value = false;

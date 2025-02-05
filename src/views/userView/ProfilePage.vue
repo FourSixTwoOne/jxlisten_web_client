@@ -3,8 +3,7 @@ import { ref, onMounted } from 'vue';
 import { debounce } from 'lodash-es';
 import { useUserStore } from '@/stores';
 import { uploadFileService, updateUserService } from '@/api/user.js';
-import { EditPen, Upload, InfoFilled, Search, Plus } from '@element-plus/icons-vue';
-import AvatarView from '@/components/AvatarView.vue';
+import { EditPen, Upload, InfoFilled, Search, Plus,Loading } from '@element-plus/icons-vue';
 
 const userInfo = ref({
     userId: '',
@@ -153,7 +152,7 @@ const addFriend = async (userId) => {
                 ElMessage.info('已取消添加好友');
             });
     } catch (error) {
-        ElMessage.error('操作失败');
+        ElMessage.error('操作失败', error);
     }
 };
 

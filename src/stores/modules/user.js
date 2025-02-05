@@ -14,7 +14,7 @@ export const useUserStore = defineStore(
         const removeToken = () => {
             token.value = '';
         };
-
+        const roomId = ref(0);
         const user = ref({
             userId: '',
             username: '',
@@ -43,6 +43,7 @@ export const useUserStore = defineStore(
             token,
             setToken,
             removeToken,
+            roomId,
             user,
             getUser,
             setUser,

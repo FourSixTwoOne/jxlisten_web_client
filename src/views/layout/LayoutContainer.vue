@@ -24,9 +24,11 @@ const toggleProfile = () => {
 };
 
 // 视图切换优化
-const changeContent = (view) => {
-    const isSameView = viewName.value === view;
-    viewName.value = view;
+const changeContent = (param) => {
+    console.log('切换视图', param);
+    if (param.length === 2) viewId.value = param[1];
+    const isSameView = viewName.value === param[0];
+    viewName.value = param[0];
     isThreeVisible.value = !isSameView || !isThreeVisible.value;
 };
 
@@ -49,13 +51,11 @@ const closeThreeContainer = () => {
 
 // 切换视图方法
 const changeView = (params) => {
-    if(params[0] === 'friend') viewId.value = params[1];
+    if (params[0] === 'friend') viewId.value = params[1];
     viewName.value = params[0];
     isThreeVisible.value = true;
     console.log('切换视图成功！', params[0], viewId.value);
 };
-
-
 
 onMounted(() => {
     songStore.initAudio();
@@ -83,7 +83,7 @@ onUnmounted(() => {
                             type="primary"
                             size="small"
                             class="play-btn"
-                            @click="changeContent('music')"
+                            @click="changeContent(['music'])"
                             >播放器</el-button
                         >
                     </div>
@@ -92,7 +92,7 @@ onUnmounted(() => {
                             type="primary"
                             size="small"
                             class="play-btn"
-                            @click="changeContent('room')"
+                            @click="changeContent(['room', userStore.roomId])"
                             >音乐室</el-button
                         >
                     </div>
@@ -163,13 +163,16 @@ onUnmounted(() => {
                     <router-view />
                 </div>
                 <div class="three-container" v-if="isThreeVisible">
-                    <button class="close-button" @click="closeThreeContainer">×</button>
-                    <ThreeContainer :params="{ userId: viewId }" :viewName="viewName" :key="`${viewName}-${viewId}`"/>
+                    <button type="primary" class="close-button" @click="closeThreeContainer">
+                        ×
+                    </button>
+                    <ThreeContainer
+                        :params="{ id: viewId }"
+                        :viewName="viewName"
+                        :key="`${viewName}-${viewId}`" />
                 </div>
                 <div class="profile" v-if="isProfileVisible">
-                    <ProfilePage
-                        @close="closeProfile"
-                        @action-selected="changeView" />
+                    <ProfilePage @close="closeProfile" @action-selected="changeView" />
                 </div>
             </el-main>
 
@@ -321,14 +324,16 @@ onUnmounted(() => {
         }
         .three-container {
             display: flex;
-            border: 1px solid #ccc;
+            border: $border2;
             border-radius: 4px;
             width: 400px;
             position: relative;
             .close-button {
                 position: absolute;
+                right: 0;
                 background: none;
                 border: 1px solid rgb(129, 129, 129);
+                border-radius: 4px;
                 font-size: 20px;
                 color: rgb(129, 129, 129);
                 z-index: 1;

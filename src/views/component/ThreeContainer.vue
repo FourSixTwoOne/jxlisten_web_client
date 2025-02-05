@@ -42,6 +42,6 @@ const currentComponent = computed(() => {
 <template>
     <div class="three-container">
         <!-- 传递动态参数到组件 -->
-        <component :is="currentComponent" v-bind="params"></component>
+        <component :is="currentComponent" :param="params"></component>
     </div>
 </template>
