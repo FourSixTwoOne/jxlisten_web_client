@@ -1,8 +1,11 @@
 <script setup>
 import { Star, WarnTriangleFilled } from '@element-plus/icons-vue';
+import { updateMusicInteraction } from '@/api/music';
+import { useUserStore } from '@/stores';
 import BxLike from '@/components/icons/BxLikeSVG.vue';
 import AddIcon from '@/components/icons/AddSVG.vue';
 
+const userStore = useUserStore();
 const props = defineProps({
     type: {
         type: String,
@@ -18,17 +21,18 @@ const emit = defineEmits(['update']); // 定义事件
 
 const handleLike = () => {
     const newRow = { ...props.row };
-    newRow.isLiked = !newRow.isLiked;
-    newRow.likeCount += newRow.isLiked ? 1 : -1;
+    newRow.isLike = !newRow.isLike;
+    newRow.likeCount += newRow.isLike ? 1 : -1;
+    // 调用更新服务
 
     emit('update', newRow);
 };
 
 const handleCollect = () => {
     const newRow = { ...props.row };
-    newRow.isCollected = !newRow.isCollected;
-    newRow.collectCount += newRow.isCollected ? 1 : -1;
-
+    newRow.isCollect = !newRow.isCollect;
+    newRow.collectCount += newRow.isCollect ? 1 : -1;
+    updateMusicInteraction(userStore.user.userId, props.row.musicId, newRow.isCollect, newRow.isLike);
     emit('update', newRow);
 };
 
@@ -53,8 +57,8 @@ const addOrJion = () => {
                 size="small"
                 :icon="BxLike"
                 @click="handleLike"
-                :class="{ liked: props.row?.isLiked }">
-                <span>{{ props.row?.likeCount || 0 }}</span>
+                :class="{ liked: props.row?.isLike ?? false }">
+                <span>{{ props.row?.likeCount ?? 0 }}</span>
             </el-button>
         </el-tooltip>
 
@@ -63,8 +67,8 @@ const addOrJion = () => {
                 size="small"
                 @click="handleCollect"
                 :icon="Star"
-                :class="{ collected: props.row?.isCollected }">
-                <span>{{ props.row?.collectCount || 0 }}</span>
+                :class="{ collected: props.row?.isCollect ?? false }">
+                <span>{{ props.row?.collectCount ?? 0 }}</span>
             </el-button>
         </el-tooltip>
 
@@ -89,7 +93,7 @@ const addOrJion = () => {
     flex-direction: row;
     align-items: center;
     justify-content: space-around;
-    width: 100%; /* 修改为100%以适应容器 */
+    width: 100px; /* 修改为100%以适应容器 */
 }
 
 .liked {

@@ -3,7 +3,16 @@ import { ref, onMounted } from 'vue';
 import { debounce } from 'lodash-es';
 import { useUserStore } from '@/stores';
 import { uploadFileService, updateUserService } from '@/api/user.js';
-import { EditPen, Upload, InfoFilled, Search, Plus,Loading } from '@element-plus/icons-vue';
+import {
+    EditPen,
+    Upload,
+    InfoFilled,
+    Search,
+    Plus,
+    Loading,
+    CircleClose,
+} from '@element-plus/icons-vue';
+import UserProfile from '@/components/UserProfile.vue';
 
 const userInfo = ref({
     userId: '',
@@ -15,7 +24,6 @@ const userInfo = ref({
 });
 
 const friendList = ref([]);
-const emit = defineEmits(['action-selected', 'params']);
 const userStore = useUserStore();
 const isEditing = ref(false);
 const imageFile = ref(null);
@@ -24,6 +32,107 @@ const searchResults = ref([]);
 const searchKeyword = ref('');
 const isLoadingSearch = ref(false);
 const isFriendsVisible = ref(false);
+const isProfileVisible = ref(false);
+const selectedUserId = ref(null);
+
+const buttonProps = {
+    color: '#a0a20a',
+    size: 'small',
+    plain: true,
+};
+
+const getUser = async () => {
+    await userStore.getUser();
+    userInfo.value = userStore.user;
+};
+
+onMounted(() => {
+    getUser();
+});
+
+// 获取初始好友列表
+const getFriends = async () => {
+    // try {
+    //     friendList.value = res.data;
+    // } catch (error) {
+    //     ElMessage.error('获取好友列表失败');
+    // }
+    friendList.value = [
+        {
+            userId: 1,
+            username: 'John Doe',
+            image: 'https://via.placeholder.com/150',
+            isOnline: true,
+        },
+        {
+            userId: 2,
+            username: 'Jane Smith',
+            image: 'https://via.placeholder.com/150',
+            isOnline: false,
+        },
+        {
+            userId: 3,
+            username: 'Mike Brown',
+            image: 'https://via.placeholder.com/150',
+            isOnline: true,
+        },
+        {
+            userId: 1,
+            username: 'John Doe',
+            image: 'https://via.placeholder.com/150',
+            isOnline: true,
+        },
+        {
+            userId: 2,
+            username: 'Jane Smith',
+            image: 'https://via.placeholder.com/150',
+            isOnline: false,
+        },
+        {
+            userId: 3,
+            username: 'Mike Brown',
+            image: 'https://via.placeholder.com/150',
+            isOnline: true,
+        },
+        {
+            userId: 1,
+            username: 'John Doe',
+            image: 'https://via.placeholder.com/150',
+            isOnline: true,
+        },
+        {
+            userId: 2,
+            username: 'Jane Smith',
+            image: 'https://via.placeholder.com/150',
+            isOnline: false,
+        },
+        {
+            userId: 3,
+            username: 'Mike Brown',
+            image: 'https://via.placeholder.com/150',
+            isOnline: true,
+        },
+        {
+            userId: 1,
+            username: 'John Doe',
+            image: 'https://via.placeholder.com/150',
+            isOnline: true,
+        },
+        {
+            userId: 2,
+            username: 'Jane Smith',
+            image: 'https://via.placeholder.com/150',
+            isOnline: false,
+        },
+        {
+            userId: 3,
+            username: 'Mike Brown',
+            image: 'https://via.placeholder.com/150',
+            isOnline: true,
+        },
+    ];
+};
+
 // 切换编辑状态
 const editProfile = () => {
     isEditing.value = true;
@@ -60,62 +169,15 @@ const toggleFriendsList = () => {
     isFriendsVisible.value = !isFriendsVisible.value;
 };
 
-const handleAction = (action) => {
-    emit('action-selected', [action]);
+const toggleView = (viewParams) => {
+    console.log('显示好友主页', viewParams);
+    userStore.viewParams = viewParams;
+    userStore.isThreeVisible = true;
 };
-
-const toggleFriendProfile = (action, userId) => {
-    console.log('显示好友主页', action, userId);
-    emit('action-selected', [action, userId]);
-};
-
-const buttonProps = {
-    color: '#a0a20a',
-    size: 'small',
-    plain: true,
-};
-
-const getUser = async () => {
-    await userStore.getUser();
-    userInfo.value = await userStore.user;
-};
-
-onMounted(() => {
-    getUser();
-});
-
-// 获取初始好友列表
-const getFriends = async () => {
-    // try {
-    //     friendList.value = res.data;
-    // } catch (error) {
-    //     ElMessage.error('获取好友列表失败');
-    // }
-    friendList.value = [
-        {
-            userId: 1,
-            username: 'John Doe',
-            image: 'https://via.placeholder.com/150',
-            isOnline: true,
-        },
-        {
-            userId: 2,
-            username: 'Jane Smith',
-            image: 'https://via.placeholder.com/150',
-            isOnline: false,
-        },
-        {
-            userId: 3,
-            username: 'Mike Brown',
-            image: 'https://via.placeholder.com/150',
-            isOnline: true,
-        },
-    ];
-};
-
 // 带防抖的搜索方法
 const handleSearch = debounce(async () => {
     if (!searchKeyword.value.trim()) {
+        // 如果搜索关键字为空，则清空搜索结果
         searchResults.value = [];
         return;
     }
@@ -146,7 +208,8 @@ const addFriend = async (userId) => {
             type: 'warning',
         })
             .then(async () => {
-                await addFriend(userId);
+                // await addFriend(userId);
+                console.log('添加好友', userId);
             })
             .catch(() => {
                 ElMessage.info('已取消添加好友');
@@ -154,6 +217,11 @@ const addFriend = async (userId) => {
     } catch (error) {
         ElMessage.error('操作失败', error);
     }
+};
+
+const toggleUserProfile = (userId) => {
+    selectedUserId.value = userId;
+    isProfileVisible.value = !isProfileVisible.value;
 };
 
 // 初始化获取好友列表
@@ -200,15 +268,9 @@ onMounted(() => {
             </div>
         </div>
 
+        <div class="bio-label">个人简介：</div>
         <div class="bio-container" v-if="!isEditing">
-            <h3>个人简介：</h3>
-            <el-input
-                class="transparent-input"
-                :rows="2"
-                type="textarea"
-                :autosize="{ minRows: 1, maxRows: 3 }"
-                v-model="userInfo.bio"
-                placeholder="暂无个人简介" />
+            <div>{{ userInfo.bio || '暂无个人简介' }}</div>
         </div>
         <div class="bio-container" v-if="isEditing">
             <el-input
@@ -220,7 +282,7 @@ onMounted(() => {
                 placeholder="输入个人简介" />
         </div>
         <div class="edit-button">
-            <el-button v-if="!isEditing" type="primary" plain @click="editProfile" text>
+            <el-button v-if="!isEditing" type="primary" plain link @click="editProfile">
                 点击进行修改<el-icon><EditPen /></el-icon
             ></el-button>
             <el-popconfirm
@@ -233,22 +295,34 @@ onMounted(() => {
                 @cancel="cancelEvent">
                 <template #reference>
                     <div>
-                        <!-- 添加一个单一的根元素 -->
-                        <el-button v-if="isEditing" type="warning" plain text :loading="isLoading">
+                        <el-button v-if="isEditing" type="warning" plain link :loading="isLoading">
                             点击进行提交 <el-icon><Upload /></el-icon>
                         </el-button>
                     </div>
-                    <!-- 结束单一的根元素 -->
                 </template>
             </el-popconfirm>
+            <el-button
+                class="cancel-button"
+                v-if="isEditing"
+                type="danger"
+                plain
+                link
+                @click="isEditing = false"
+                ><el-icon><CircleClose /></el-icon>
+            </el-button>
         </div>
+        <UserProfile
+            v-if="isProfileVisible"
+            :userId="selectedUserId"
+            @close="isProfileVisible = false" />
         <div class="actions">
-            <div>
+            <div class="friend">
                 <el-button v-bind="buttonProps" @click="toggleFriendsList">好友列表</el-button>
                 <div v-if="isFriendsVisible" class="friend-search-container">
                     <el-input
+                        class="search-input"
                         v-model="searchKeyword"
-                        placeholder="输入昵称搜索用户"
+                        placeholder="输入昵称添加用户"
                         :prefix-icon="Search"
                         clearable
                         @input="handleSearch" />
@@ -260,12 +334,12 @@ onMounted(() => {
                         </div>
 
                         <template v-else>
-                            <!-- 显示搜索结果 -->
                             <ul v-if="searchKeyword && searchResults.length">
                                 <li
                                     v-for="user in searchResults"
                                     :key="user.userId"
-                                    class="result-item">
+                                    class="result-item"
+                                    @click="toggleUserProfile(user.userId)">
                                     <div class="friend-info">
                                         <AvatarView :imageUrl="user.avatar" class="friend-avatar" />
                                         <span class="username">{{ user.username }}</span>
@@ -279,13 +353,12 @@ onMounted(() => {
                                 </li>
                             </ul>
 
-                            <!-- 显示好友列表 -->
                             <ul v-else class="friend-list">
                                 <li
                                     v-for="friend in friendList"
                                     :key="friend.userId"
                                     class="friend-item"
-                                    @click="toggleFriendProfile('friend', friend.userId)">
+                                    @click="toggleUserProfile(friend.userId)">
                                     <div class="friend-info">
                                         <AvatarView
                                             :imageUrl="friend.avatar"
@@ -306,20 +379,27 @@ onMounted(() => {
                     </div>
                 </div>
             </div>
-            <el-button v-bind="buttonProps" @click="handleAction('favorites')" class="f-btn"
+            <el-button
+                v-bind="buttonProps"
+                @click="toggleView({ name: 'favorites' })"
+                class="favorite-btn"
                 >收藏歌曲</el-button
             >
-            <el-dropdown split-button size="small" color="#a0a20a" @click="handleAction('history')">
+            <el-dropdown
+                split-button
+                size="small"
+                color="#a0a20a"
+                @click="toggleView({ name: 'record', param: 1 })">
                 <div>历史记录</div>
                 <template #dropdown>
                     <el-dropdown-menu>
-                        <el-dropdown-item @click="handleAction('record-upload')"
+                        <el-dropdown-item @click="toggleView({ name: 'record', param: 1 })"
                             >上传记录</el-dropdown-item
                         >
-                        <el-dropdown-item @click="handleAction('record-listen')"
+                        <el-dropdown-item @click="toggleView({ name: 'record', param: 2 })"
                             >最近听歌</el-dropdown-item
                         >
-                        <el-dropdown-item @click="handleAction('record-room')"
+                        <el-dropdown-item @click="toggleView({ name: 'record', param: 3 })"
                             >音乐室记录</el-dropdown-item
                         >
                     </el-dropdown-menu>
@@ -331,13 +411,19 @@ onMounted(() => {
 <style lang="scss" scoped>
 @use '@/assets/main.scss' as *;
 .profile-page {
-    height: calc(100% - 12px);
+    height: 100%;
     font-size: small;
+    display: flex;
+    flex-direction: column;
     color: #118c98;
-    padding: 2px;
     background-image: url('@/assets/BG.jpg');
     background-size: cover;
     background-position: center;
+
+    .bio-label {
+        margin: 6px;
+        font-size: 16px;
+    }
 
     .profile-header {
         display: flex;
@@ -350,8 +436,10 @@ onMounted(() => {
     }
 
     .bio-container {
+        padding: 4px;
         margin-bottom: 5px;
         margin-top: 5px;
+        background-color: aliceblue;
         .transparent-input {
             opacity: 0.8;
         }
@@ -363,11 +451,9 @@ onMounted(() => {
         display: flex;
         justify-content: center;
     }
-
-    .user-info {
-        flex-grow: 1;
+    .cancel-button {
+        margin-left: 10px;
     }
-
     .user-info-input {
         .input-with-label {
             display: flex;
@@ -392,13 +478,14 @@ onMounted(() => {
         }
     }
     .actions {
-        height: 400px;
+        display: flex;
+        flex: 1;
+        flex-direction: column;
         border: $border2;
         border-radius: 4px;
-        display: flex;
-        flex-direction: column;
 
-        .f-btn {
+        .favorite-btn {
+            margin-top: 5px;
             margin-left: 0;
         }
 
@@ -409,7 +496,7 @@ onMounted(() => {
         }
         .friend-search-container {
             .el-input {
-                height: 20px;
+                height: 25px;
                 border-bottom: $border2;
                 border-top: $border2;
             }
@@ -433,9 +520,15 @@ onMounted(() => {
                     }
                 }
                 .add-button {
+                    margin: 0 10px;
                     width: 20px;
                     height: 20px;
                 }
+            }
+
+            .friend-list {
+                min-height: 100px;
+                overflow-y: auto;
             }
 
             ul {
@@ -447,7 +540,6 @@ onMounted(() => {
                     display: flex;
                     align-items: center;
                     cursor: pointer;
-                    justify-content: space-between;
 
                     &:hover {
                         background: #21375a;
@@ -467,11 +559,6 @@ onMounted(() => {
                 .friend-avatar {
                     width: 30px;
                     height: 30px;
-                }
-
-                .username {
-                    font-weight: 500;
-                    color: #303133;
                 }
 
                 .status {

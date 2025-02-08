@@ -57,8 +57,10 @@ const sendMessage = () => {
 
         <div class="input-area">
             <el-input
+                class="input"
                 v-model="newMessage"
                 type="textarea"
+                size="small"
                 autosize
                 placeholder="输入信息…"
                 @keyup.enter.prevent="sendMessage" />
@@ -70,7 +72,7 @@ const sendMessage = () => {
 <style scoped lang="scss">
 @use '@/assets/main.scss' as *;
 .chat-container {
-    height: calc(100% - 107px);
+    height: 100%;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -126,9 +128,19 @@ const sendMessage = () => {
         }
     }
     .input-area {
-        border-top: $border2;
+        border: $border2;
         display: flex;
-        gap: 4px;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+    }
+
+    .input {
+        height: 29px;
+    }
+
+    .el-button {
+        height: 29px;
     }
 }
 </style>

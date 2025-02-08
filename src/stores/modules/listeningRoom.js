@@ -1,7 +1,7 @@
 //******************* 储存用户信息 *******************\\
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
-import { getRoomService } from '@/api/listeningroom';
+import { getRoomService } from '@/api/listeningRoom';
 export const useRoomStore = defineStore(
     'room',
     () => {

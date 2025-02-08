@@ -3,9 +3,8 @@ import { ref } from 'vue';
 import { Search, Upload, Plus } from '@element-plus/icons-vue';
 import defaultCoverUrl from '@/assets/apple-touch-icon.png';
 import CustomPagination from '@/components/CustomPagination.vue';
-import CUploader from '@/components/CUploader.vue';
 import { uploadFileService } from '@/api/user';
-import { uploadMusicService } from '@/api/music';
+import { uploadMusicService, getMusicListService } from '@/api/music';
 import { useSongStore } from '@/stores';
 
 const songStore = useSongStore();
@@ -41,7 +40,7 @@ const handleClose = () => {
     cancelForm();
 };
 
-const onClick = async () => {
+const onUpload = async () => {
     isLoading.value = true;
     try {
         // 上传封面
@@ -54,6 +53,7 @@ const onClick = async () => {
         // 上传音频
         if (!musicFile.value) {
             ElMessage.error('请选择音频文件');
+            return;
         }
         const audioFormData = new FormData();
         audioFormData.append('file', musicFile.value);
@@ -61,7 +61,8 @@ const onClick = async () => {
         uploadForm.value.audioUrl = audioResponse.data.data;
 
         // 调用update
-        uploadMusicService(uploadForm.value);
+        await uploadMusicService(uploadForm.value);
+        ElMessage.success('上传成功');
     } catch (error) {
         console.error('上传失败:', error);
     } finally {
@@ -77,36 +78,7 @@ const pageParams = ref({
     status: '',
 });
 
-const musicList = ref([
-    {
-        musicId: 1,
-        coverUrl: '',
-        title: '曲名1',
-        publisher: '发布者1',
-        author: '作者1',
-        uploadTime: '2023-10-01',
-        audioUrl: 'http://localhost:5173/src/assets/music/%E5%B0%8F%E5%9F%8E%E8%B0%A3%20-%20Vk.mp3',
-        type: 1, // 1: 原创, 2: 翻唱, 3: 转载
-        likeCount: 0,
-        collectCount: 0,
-        isLiked: false,
-        isCollected: false,
-    },
-    {
-        musicId: 2,
-        coverUrl: '',
-        title: '曲名2',
-        publisher: '发布者2',
-        author: '作者2',
-        uploadTime: '2023-10-02',
-        audioUrl: 'http://localhost:5173/src/assets/music/%E5%B0%8F%E5%9F%8E%E8%B0%A3%20-%20Vk.mp3',
-        type: 2, // 2: 翻唱
-        likeCount: 0,
-        collectCount: 0,
-        isLiked: false,
-        isCollected: false,
-    },
-]);
+const musicList = ref([]);
 
 const handleSearch = () => {
     handleQuery();
@@ -114,12 +86,13 @@ const handleSearch = () => {
 
 const handleQuery = async () => {
     isLoading.value = true;
-    // await getMusicListService(pageParams.value);
+    const res = await getMusicListService(pageParams.value);
+    musicList.value = res.data.data.records;
+    total.value = res.data.data.total;
     isLoading.value = false;
 };
 
 const handleUpdate = (updatedRow) => {
-    // TODO: 查询该歌曲的信息，更新到musicList中
     const index = musicList.value.findIndex((item) => item.musicId === updatedRow.musicId);
     if (index !== -1) {
         musicList.value[index] = { ...musicList.value[index], ...updatedRow };
@@ -129,71 +102,80 @@ const handleUpdate = (updatedRow) => {
 const addSong = (song) => {
     songStore.addSong(song);
 };
+
+handleQuery();
 </script>
 
 <template>
     <el-container class="music-list-view">
+        <el-text size="large" type="primary">歌曲列表</el-text>
         <el-header>
-            <el-text size="large" type="primary">歌曲列表</el-text>
-
             <div class="search-container">
                 <div class="search-label">
-                    <el-icon><Search /></el-icon>歌名：
+                    <el-icon><Search /></el-icon>
+                    <div width="20px">歌曲：</div>
+                    <el-input
+                        class="search-input"
+                        @input="handleSearch"
+                        v-model="pageParams.title" />
                 </div>
-                <el-input class="search-input" @input="handleSearch" v-model="pageParams.title" />
                 <div class="search-label">
-                    <el-icon><Search /></el-icon>作者：
+                    <el-icon><Search /></el-icon>
+                    <div>作者：</div>
+                    <el-input
+                        class="search-input"
+                        @input="handleSearch"
+                        v-model="pageParams.author" />
                 </div>
-                <el-input class="search-input" @input="handleSearch" v-model="pageParams.author" />
             </div>
             <el-button size="small" type="primary" @click="dialog = true" class="button-upload">
                 上传歌曲<el-icon class="el-icon--right"><Upload /></el-icon>
             </el-button>
         </el-header>
-        <el-main>
-            <el-drawer
-                v-model="dialog"
-                title="上传歌曲"
-                :before-close="handleClose"
-                direction="ltr"
-                class="drawer">
-                <div class="drawer__content">
-                    <el-form :model="uploadForm">
-                        <el-form-item label="标题" :label-width="formLabelWidth">
-                            <el-input v-model="uploadForm.title" autocomplete="off" />
-                        </el-form-item>
-                        <el-form-item label="原唱" :label-width="formLabelWidth">
-                            <el-input v-model="uploadForm.author" autocomplete="off" />
-                        </el-form-item>
-                        <el-form-item label="类型" :label-width="formLabelWidth">
-                            <el-select v-model="uploadForm.type" placeholder="请选择歌曲类型">
-                                <el-option label="原创" :value="1" />
-                                <el-option label="翻唱" :value="2" />
-                                <el-option label="转载" :value="3" />
-                            </el-select>
-                        </el-form-item>
-                        <el-form-item label="上传封面" :label-width="formLabelWidth">
-                            <CUploader
-                                placeholder="请上传封面图片"
-                                type="image"
-                                @file-selected="coverFile = $event" />
-                        </el-form-item>
-                        <el-form-item label="上传音频" :label-width="formLabelWidth">
-                            <CUploader
-                                placeholder="请上传音频文件"
-                                type="audio"
-                                @file-selected="musicFile = $event" />
-                        </el-form-item>
+        <el-drawer
+            v-model="dialog"
+            title="上传歌曲"
+            :before-close="handleClose"
+            direction="ltr"
+            class="drawer">
+            <div class="drawer__content">
+                <el-form :model="uploadForm">
+                    <el-form-item label="标题" :label-width="formLabelWidth">
+                        <el-input v-model="uploadForm.title" autocomplete="off" />
+                    </el-form-item>
+                    <el-form-item label="原唱" :label-width="formLabelWidth">
+                        <el-input v-model="uploadForm.author" autocomplete="off" />
+                    </el-form-item>
+                    <el-form-item label="类型" :label-width="formLabelWidth">
+                        <el-select v-model="uploadForm.type" placeholder="请选择歌曲类型">
+                            <el-option label="原创" :value="1" />
+                            <el-option label="翻唱" :value="2" />
+                            <el-option label="转载" :value="3" />
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="上传封面" :label-width="formLabelWidth">
+                        <CUploader
+                            placeholder="请上传封面图片"
+                            type="image"
+                            @file-selected="coverFile = $event" />
+                    </el-form-item>
+                    <el-form-item label="上传音频" :label-width="formLabelWidth">
+                        <CUploader
+                            placeholder="请上传音频文件"
+                            type="audio"
+                            @file-selected="musicFile = $event" />
+                    </el-form-item>
 
-                        <div class="drawer__footer">
-                            <el-button @click="cancelForm">取消</el-button>
-                            <el-button type="primary" :loading="isLoading" @click="onClick">
-                                {{ loading ? '提交中...' : '提交' }}
-                            </el-button>
-                        </div>
-                    </el-form>
-                </div>
-            </el-drawer>
+                    <div class="drawer__footer">
+                        <el-button @click="cancelForm">取消</el-button>
+                        <el-button type="primary" :loading="isLoading" @click="onUpload">
+                            {{ loading ? '提交中...' : '提交' }}
+                        </el-button>
+                    </div>
+                </el-form>
+            </div>
+        </el-drawer>
+        <el-main>
             <el-table class="music-list" :data="musicList" :loading="isLoading">
                 <el-table-column label="封面" align="center">
                     <template #default="scope">
@@ -246,7 +228,7 @@ const addSong = (song) => {
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column label="操作" align="center">
+                <el-table-column label="操作" align="center" width="120px">
                     <template #default="scope">
                         <ActionButtons :type="'music'" :row="scope.row" @update="handleUpdate" />
                     </template>
@@ -267,107 +249,88 @@ const addSong = (song) => {
         </el-footer>
     </el-container>
 </template>
-
 <style lang="scss" scoped>
 @use '@/assets/main.scss' as *;
 .music-list-view {
-    $bg: rgb(92, 152, 213);
+    $bg: #f5f7fa;
     display: flex;
-    flex: 1;
+    overflow: auto;
     flex-direction: column;
-    width: 100%;
     height: 100%;
 
-    .el-header,
-    .el-main,
-    .el-footer {
-        padding: 0 0;
-    }
-
     .el-header {
+        height: 30px;
         display: flex;
         flex-direction: row;
-        justify-content: space-between;
         align-items: center;
-        height: auto;
-        border-bottom: $border;
-        padding: 2px 10px;
+        justify-content: space-between;
 
         .search-container {
-            margin: 0 10%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 12px;
             color: #b0b4b9;
-            .search-label {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 60px;
-            }
-            .search-input {
-                opacity: 0.4;
-            }
-            .el-icon {
-                display: flex;
-                margin-top: 2px;
-            }
-            .el-input {
-                width: 120px;
-                height: 20px;
-                margin-right: 4px;
-            }
-        }
-        .button-upload {
-            flex: 0;
-            margin-right: 1;
-        }
-    }
-    .music-list {
-        font-size: 12px;
-        width: 100%;
-        background-color: $bg;
-        :deep(.el-table__cell) {
-            color: #1c3c53;
-            padding: 0;
-            margin: 0;
-            background-color: $bg;
-        }
-
-        .music-operation {
-            display: flex;
-            flex-direction: row;
-            justify-content: center;
             gap: 4px;
         }
 
-        .el-tag {
-            height: 15px;
-            width: 15px;
-            padding: 1px;
-            margin-bottom: 3px;
-            font-size: 10px;
-        }
-
-        .el-button.text {
-            color: #b0b4b9;
-            &.liked {
-                color: red;
-            }
-            &.collected {
-                color: gold;
+        .search-label {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            flex-direction: row;
+            .search-input {
+                height: 20px;
+                max-width: 100px;
+                width: 80px;
+                opacity: 0.8;
             }
         }
     }
-    .drawer__content {
-        padding: 20px;
-    }
 
+    .el-main {
+        overflow: auto;
+
+        .music-list {
+            height: 100%;
+            width: 100%;
+            background: $bg;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+            :deep(.el-table__cell) {
+                padding: 8px 0;
+                background: transparent;
+                color: #606266;
+                .cell {
+                    font-size: 13px;
+                    white-space: nowrap;
+                }
+            }
+            // 封面图片样式
+            img {
+                border-radius: 4px;
+            }
+            // 操作按钮容器
+            .music-operation {
+                display: flex;
+                flex-direction: row;
+                gap: 2px;
+                .el-button {
+                    padding: 4px;
+                }
+            }
+        }
+    }
     .el-footer {
+        height: 40px;
         display: flex;
         justify-content: center;
         align-items: center;
+    }
+
+    // 调整表格字体大小
+    :deep(.el-table__cell .cell) {
+        font-size: 12px;
     }
 }
 </style>

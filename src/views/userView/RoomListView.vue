@@ -1,5 +1,9 @@
 <script setup>
-import { Search, Upload } from '@element-plus/icons-vue';
+import { Search, Upload, User, Clock } from '@element-plus/icons-vue';
+import defaultCover from '@/assets/cover.jpg';
+import { createListeningRoomService, getListeningRoomListService } from '@/api/ListeningRoom';
+import { uploadFileService } from '@/api/user';
+
 import { ref } from 'vue';
 
 const isLoading = ref(false);
@@ -14,13 +18,7 @@ const pageParams = ref({
     createdName: '',
     type: '',
 });
-
-const roomList = ref([
-    { roomName: '房间A', createdName: '用户A', createTime: '2023-10-01', coverUrl: 'cover_url_1' },
-    { roomName: '房间B', createdName: '用户B', createTime: '2023-10-02', coverUrl: 'cover_url_2' },
-]);
-
-const defaultCoverUrl = 'default_cover_url';
+const roomList = ref([]);
 
 const handleSearch = () => {
     handleQuery();
@@ -28,13 +26,15 @@ const handleSearch = () => {
 
 const handleQuery = async () => {
     isLoading.value = true;
-    // await getMusicListService(pageParams.value);
+    const res = await getListeningRoomListService(pageParams.value);
+    roomList.value = res.data.data.records;
+    total.value = res.data.data.total;
     isLoading.value = false;
 };
 
 const createdForm = ref({
     roomName: '',
-    createdName: '',
+    createdId: '',
     coverUrl: '',
     description: '',
 });
@@ -56,7 +56,7 @@ const handleClose = () => {
     cancelForm();
 };
 
-const onClick = async () => {
+const onUpload = async () => {
     isLoading.value = true;
     try {
         // 上传封面
@@ -64,14 +64,13 @@ const onClick = async () => {
             ElMessage.error('请选择封面图片');
             return;
         }
-
-        // const coverFormData = new FormData();
-        // coverFormData.append('file', coverFile.value);
-        // const coverResponse = await uploadFileService(coverFormData);
-        // createdForm.value.coverUrl = coverResponse.data.data;
+        const coverFormData = new FormData();
+        coverFormData.append('file', coverFile.value);
+        const coverResponse = await uploadFileService(coverFormData);
+        createdForm.value.coverUrl = coverResponse.data.data;
 
         // 调用update
-        // uploadMusicService(createdForm.value);
+        await createListeningRoomService(createdForm.value);
         ElMessage.success('音乐室创建成功');
     } catch (error) {
         console.error('上传失败:', error);
@@ -80,28 +79,35 @@ const onClick = async () => {
         isLoading.value = false;
     }
 };
+
+const joinRoom = async (roomId) => {
+    console.log(`加入房间: ${roomId}`);
+    
+};
+
+handleQuery();
 </script>
 
 <template>
     <el-container class="listening-room-layout">
+        <el-text size="large" type="primary">音乐室列表</el-text>
         <el-header>
-            <el-text size="large" type="primary">音乐室列表</el-text>
             <div class="search-container">
                 <div class="search-label">
                     <el-icon><Search /></el-icon>音乐室名：
+                    <el-input
+                        class="search-input"
+                        @input="handleSearch"
+                        v-model="pageParams.roomName"
+                        style="width: 120px; margin-right: 10px; height: 20px" />
                 </div>
-                <el-input
-                    class="search-input"
-                    @input="handleSearch"
-                    v-model="pageParams.roomName"
-                    style="width: 120px; margin-right: 10px; height: 20px" />
                 <div class="search-label">
                     <el-icon><Search /></el-icon>房主名：
+                    <el-input
+                        class="search-input"
+                        @input="handleSearch"
+                        v-model="pageParams.createdName" />
                 </div>
-                <el-input
-                    class="search-input"
-                    @input="handleSearch"
-                    v-model="pageParams.createdName" />
             </div>
             <el-button size="small" type="primary" @click="dialog = true" class="button-upload">
                 创建音乐室<el-icon class="el-icon--right"><Upload /></el-icon>
@@ -131,13 +137,15 @@ const onClick = async () => {
                     <el-form-item label="描述" :label-width="formLabelWidth">
                         <el-input
                             type="textarea"
-                            :rows="4"
+                            autosize
+                            maxlength="60"
+                            show-word-limit
                             placeholder="请输入音乐室描述"
                             v-model="createdForm.description" />
                     </el-form-item>
                     <div class="drawer__footer">
                         <el-button @click="cancelForm">取消</el-button>
-                        <el-button type="primary" :loading="isLoading" @click="onClick">
+                        <el-button type="primary" :loading="isLoading" @click="onUpload">
                             {{ isLoading ? '提交中...' : '提交' }}
                         </el-button>
                     </div>
@@ -145,28 +153,53 @@ const onClick = async () => {
             </div>
         </el-drawer>
         <el-main>
-            <el-table class="room-list" :data="roomList" v-loading="isLoading" fit>
-                <el-table-column label="封面" align="center">
-                    <template #default="scope">
-                        <img
-                            :src="scope.row.coverUrl ? scope.row.coverUrl : defaultCoverUrl"
-                            alt="封面"
-                            style="width: 40px; height: 40px; object-fit: cover" />
-                    </template>
-                </el-table-column>
-                <el-table-column label="名称" prop="title"> </el-table-column>
-                <el-table-column label="房主" prop="publisherId" />
-                <el-table-column label="创建时间" prop="uploadTime" />
-                <el-table-column label="操作" align="center" width="auto">
-                    <template>
-                        <el-button size="small">加入</el-button>
-                    </template>
-                </el-table-column>
+            <el-row :gutter="20" class="room-grid">
+                <el-col
+                    v-for="(room, index) in roomList"
+                    :key="index"
+                    :xs="24"
+                    :sm="12"
+                    :md="8"
+                    :lg="6"
+                    class="room-col">
+                    <el-card class="room-card">
+                        <div class="card-content">
+                            <div class="cover-container">
+                                <img
+                                    :src="room.coverUrl || defaultCover"
+                                    alt="封面"
+                                    class="cover-image" />
+                            </div>
 
-                <template #empty>
-                    <el-empty description="暂无数据" />
-                </template>
-            </el-table>
+                            <div class="room-info">
+                                <h4 class="room-name">{{ room.roomName }}</h4>
+                                <div class="main-info">
+                                    <span class="owner">
+                                        <el-icon><User /></el-icon>
+                                        {{ room.createdName }}
+                                    </span>
+                                    <span class="create-time">
+                                        <el-icon><Clock /></el-icon>
+                                        {{ room.createTime }}
+                                    </span>
+                                </div>
+
+                                <!-- 描述信息 -->
+                                <div class="description" v-if="room.description">
+                                    {{ room.description }}
+                                </div>
+
+                                <!-- 操作按钮 -->
+                                <div class="actions">
+                                    <el-button type="primary" size="small" @click="joinRoom(room.roomId)">加入房间</el-button>
+                                </div>
+                            </div>
+                        </div>
+                    </el-card>
+                </el-col>
+            </el-row>
+
+            <el-empty v-if="!roomList.length" description="暂无数据" />
         </el-main>
         <el-footer>
             <CustomPagination
@@ -183,75 +216,119 @@ const onClick = async () => {
 <style lang="scss" scoped>
 @use '@/assets/main.scss' as *;
 .listening-room-layout {
-    $bg: rgb(92, 152, 213);
     display: flex;
-    flex: 1;
     flex-direction: column;
     width: 100%;
     height: 100%;
 
-    .el-header,
-    .el-main,
-    .el-footer {
-        padding: 0 0;
-    }
-
     .el-header {
+        height: 30px;
         display: flex;
         flex-direction: row;
-        justify-content: space-between;
         align-items: center;
-        height: auto;
-        border-bottom: $border;
-        padding: 2px 10px;
+        justify-content: space-between;
 
         .search-container {
-            margin: 0 10%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 12px;
             color: #b0b4b9;
-            .search-label {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 80px;
-            }
+            gap: 4px;
+        }
+
+        .search-label {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            flex-direction: row;
             .search-input {
-                opacity: 0.4;
-            }
-            .el-icon {
-                display: flex;
-                margin-top: 2px;
-            }
-            .el-input {
-                width: 120px;
                 height: 20px;
-                margin-right: 4px;
+                max-width: 100px;
+                width: 80px;
+                opacity: 0.8;
             }
         }
-        .button-upload {
-            flex: 0;
-            margin-right: 1;
+    }
+    .room-grid {
+        width: calc(100% - 1px);
+        .room-card {
+            transition: transform 0.3s;
+            margin: 0 5px;
+
+            &:hover {
+                transform: translateY(-5px);
+            }
+
+            .card-content {
+                display: flex;
+                flex-direction: column;
+
+                .cover-container {
+                    width: 140px;
+                    height: 140px;
+                    border-radius: 4px;
+                    overflow: hidden;
+
+                    .cover-image {
+                        top: 0;
+                        left: 0;
+                        object-fit: cover;
+                    }
+                }
+
+                .room-info {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+
+                    .room-name {
+                        font-size: 16px;
+                    }
+                    .main-info {
+                        .owner {
+                            display: flex;
+                            margin-right: 10px;
+                        }
+
+                        .meta-info {
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 8px;
+                            font-size: 12px;
+                            color: var(--el-text-color-secondary);
+
+                            .el-icon {
+                                margin-right: 4px;
+                            }
+                        }
+                    }
+
+                    .description {
+                        height: 40px;
+                        flex: 1;
+                        margin-top: 5px;
+                        font-size: 13px;
+                        line-height: 1.4;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+
+                    .actions {
+                        margin-top: 16px;
+                        text-align: center;
+                    }
+                }
+            }
         }
     }
-    .room-list {
-        font-size: 12px;
-        width: 100%;
-        background-color: $bg;
-        :deep(.el-table__cell) {
-            color: #1c3c53;
-            padding: 0;
-            margin: 0;
-            background-color: $bg;
-        }
-    }
+
     .drawer__content {
         padding: 20px;
     }
 
     .el-footer {
+        height: 40px;
         display: flex;
         justify-content: center;
         align-items: center;

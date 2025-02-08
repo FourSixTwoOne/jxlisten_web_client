@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import defaultCover from '@/assets/android-chrome-512x512.png';
-import { Delete } from '@element-plus/icons-vue';
+import { Delete, ArrowLeftBold } from '@element-plus/icons-vue';
 import PlayListSVG from '@/components/icons/PlayListSVG.vue';
 import AddListSVG from '@/components/icons/AddListSVG.vue';
 import DeleteListSVG from '@/components/icons/DeleteListSVG.vue';
@@ -9,16 +9,20 @@ import { useSongStore } from '@/stores';
 
 const songStore = useSongStore();
 const isListVisible = ref(false);
+const showActionButtons = ref(false);
 
 const selectSong = (index) => {
     songStore.pause();
     songStore.currentIndex = index;
     songStore.play();
-
 };
 
 const handleUpdate = (row) => {
-    songStore.updateSong(row);
+    if (!row) songStore.updateSong(row);
+};
+
+const toggleActionButtons = () => {
+    showActionButtons.value = !showActionButtons.value;
 };
 </script>
 
@@ -26,15 +30,34 @@ const handleUpdate = (row) => {
     <div class="music-player">
         <div class="player-area">
             <div class="song">
-                <h2>{{ songStore.currentSong?.title||'未知歌曲' }}</h2>
+                <h2>{{ songStore.currentSong?.title || '未知歌曲' }}</h2>
                 <img
                     :src="songStore.currentSong?.coverUrl || defaultCover"
                     alt="专辑封面"
                     class="album-cover" />
                 <div class="song-info">
-                    <el-button class="info-button">上传：{{ songStore.currentSong?.publisher||'未知' }}</el-button>
-                    <el-button class="info-button">原唱：{{ songStore.currentSong?.author||'未知' }}</el-button>
-                    <ActionButtons :row="songStore.currentSong" @update="handleUpdate" :type="'music'" />
+                    <el-button class="info-button"
+                        >上传：{{ songStore.currentSong?.publisher || '未知' }}</el-button
+                    >
+                    <el-button class="info-button"
+                        >原唱：{{ songStore.currentSong?.author || '未知' }}</el-button
+                    >
+                    <el-button
+                        size="small"
+                        text
+                        type="primary"
+                        class="ellipsis-button"
+                        @click.stop="toggleActionButtons">
+                        <el-icon :class="{ rotate: showActionButtons }">
+                            <!-- 使用单个箭头图标 -->
+                            <ArrowLeftBold />
+                        </el-icon>
+                    </el-button>
+                    <ActionButtons
+                        v-if="showActionButtons"
+                        :row="songStore.currentSong"
+                        @update="handleUpdate"
+                        :type="'music'" />
                 </div>
             </div>
 
@@ -59,7 +82,8 @@ const handleUpdate = (row) => {
                     type="primary"
                     size="small"
                     @click="songStore.toggleMode">
-                    {{ songStore.playMode === 0 ? '顺序播放' : '单曲循环' }}
+                    模式：
+                    <PlayModeSVG :mode="songStore.playMode"></PlayModeSVG>
                 </el-button>
                 <el-button
                     class="add-btn"
@@ -67,7 +91,7 @@ const handleUpdate = (row) => {
                     :icon="AddListSVG"
                     size="small"
                     @click="songStore.addSong">
-                    添加歌曲
+                    添加
                 </el-button>
                 <el-button
                     class="clear-btn"
@@ -75,7 +99,7 @@ const handleUpdate = (row) => {
                     type="primary"
                     size="small"
                     @click="songStore.clearPlaylist">
-                    清空所有
+                    清空
                 </el-button>
             </div>
             <ul v-if="isListVisible" key="playlist">
@@ -97,7 +121,6 @@ const handleUpdate = (row) => {
         </div>
     </div>
 </template>
-
 <style lang="scss" scoped>
 @use '@/assets/main.scss' as *;
 .music-player {
@@ -113,7 +136,6 @@ const handleUpdate = (row) => {
     color: #1f2016;
 
     .player-area {
-        
         display: flex;
         flex-direction: column;
         width: 100%;
@@ -129,8 +151,8 @@ const handleUpdate = (row) => {
             }
 
             .album-cover {
-                width: 100px; 
-                height: 100px; 
+                width: 100px;
+                height: 100px;
                 margin: 10px 0;
             }
 
@@ -138,6 +160,21 @@ const handleUpdate = (row) => {
                 display: flex;
                 flex-direction: row;
                 align-items: center;
+
+                .ellipsis-button {
+                    width: 10px;
+                    border: $border2;
+                    position: relative;
+
+                    .el-icon {
+                        transition: transform 0.5s ease;
+                        transform-origin: center;
+                    }
+
+                    .rotate {
+                        transform: rotate(180deg);
+                    }
+                }
 
                 .info-button {
                     background: none;

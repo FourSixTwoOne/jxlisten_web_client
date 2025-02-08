@@ -58,7 +58,7 @@ const handleReport = (song) => {
 
 <template>
     <div class="favorite-container">
-        <!-- 操作栏 -->
+        <h3>收藏列表</h3>
         <div class="action-bar">
             <el-button type="primary" @click="playAll">
             <i class="icon-play" /> 播放全部

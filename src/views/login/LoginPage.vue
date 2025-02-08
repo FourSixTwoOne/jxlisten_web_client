@@ -87,28 +87,16 @@ const toggleRegister = () => {
 
 const login = async () => {
     await form.value.validate();
+    const res = await loginUserService(formModel.value);
+    if (res.data.code === 1) {
+    userStore.setToken(res.data.data.token);
     ElMessage.success('登录成功');
-    userStore.setToken('1234w');
-    userStore.setUser({
-        userId: 1,
-        username: '陆2壹',
-        image: '',
-        bio: '官方',
-        gender: 0,
-        age: 18,
-    });
+    await userStore.getUser();
+
     router.push('/');
-
-    // const res = await loginUserService(formModel.value);
-    // if (res.data.code === 1) {
-    // userStore.setToken(res.data.data.token);
-    // ElMessage.success('登录成功');
-    // await userStore.getUser();
-
-    // router.push('/');
-    // } else {
-    //     ElMessage.error(res.data.msg);
-    // }
+    } else {
+        ElMessage.error(res.data.msg);
+    }
 };
 </script>
 

@@ -1,31 +1,21 @@
 body {
+    background: url('@/assets/BG.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: #b3bbcd;
     margin: 0;
-    color: #269b8b;
-    .el-container,
-    .el-main,
+    padding: 0;
+    .el-header,
     .el-footer,
-    .el-header {
+    .el-main{
         padding: 0;
         margin: 0;
     }
+   
 }
 
-$bg: #748fd8;
-$border: 4px solid #2b3e3f;
-$border2: 1px solid #ccc;
-
-/* fade-slide */
-.fade-slide-leave-active,
-.fade-slide-enter-active {
-    transition: all 0.3s;
-}
-
-.fade-slide-enter-from {
-    transform: translateX(-30px);
-    opacity: 0;
-}
-
-.fade-slide-leave-to {
-    transform: translateX(30px);
-    opacity: 0;
-}
+$background-color: rgba(255, 255, 255, 0.49); // 半透明背景
+$border-color: rgba(255, 255, 255, 0.2);
+$shadow-color: rgba(0, 0, 0, 0.3);
+$bg: #748fd8ab;
+$border: 4px solid #2b3e3f9a;
+$border2: 1px solid #cccccc80;

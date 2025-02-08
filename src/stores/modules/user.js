@@ -14,11 +14,14 @@ export const useUserStore = defineStore(
         const removeToken = () => {
             token.value = '';
         };
-        const roomId = ref(0);
+        const isThreeVisible = ref(false);
+        const viewParams = ref({
+            name: '',
+            param: null,
+        });
         const user = ref({
             userId: '',
             username: '',
-            phone: '',
             image: '',
             createTime: '',
             updateTime: '',
@@ -29,7 +32,7 @@ export const useUserStore = defineStore(
         });
         const getUser = async () => {
             const res = await getUserService();
-            if (res.status === 200) {
+            if (res.data.code === 1) {
                 user.value = res.data.data;
             }
 
@@ -43,7 +46,8 @@ export const useUserStore = defineStore(
             token,
             setToken,
             removeToken,
-            roomId,
+            isThreeVisible,
+            viewParams,
             user,
             getUser,
             setUser,

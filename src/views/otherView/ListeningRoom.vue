@@ -1,14 +1,8 @@
 <script setup>
-import ChatWindow from '@/components/ChatWindow.vue';
-import { ref, watch,onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useUserStore } from '@/stores';
 
 const userStore = useUserStore();
-const props = defineProps({
-    param: {
-        type: Object,
-    },
-});
 
 onMounted(() => {
     getListeningRoom();
@@ -20,21 +14,24 @@ const listeningRoom = ref({
     host: '',
     playlist: [],
     members: [],
+    messages: [],
 });
 
 const currentSongIndex = ref(0);
 const currentSong = ref(listeningRoom.value.playlist[currentSongIndex.value]);
-const messages = ref([]);
+
 const isMember = ref(false);
 const isMusic = ref(false);
+const showProfile = ref(false);
+const selectedUserId = ref(null);
 
 const getListeningRoom = async () => {
-    listeningRoom.value.roomId = props.param.Id;
+    listeningRoom.value.roomId = userStore.viewParams.param;
     listeningRoom.value.roomName = '音乐室';
     listeningRoom.value.host = '房主';
     listeningRoom.value.members = [
-        { name: '用户1', avatar: '' },
-        { name: '用户2', avatar: '@/assets/user2.jpg' },
+        { userId: 2, name: '用户1', avatar: '' },
+        { userId: 3, name: '用户2', avatar: '@/assets/user2.jpg' },
     ];
     listeningRoom.value.playlist = [
         {
@@ -57,6 +54,10 @@ const getListeningRoom = async () => {
             audioUrl: '@/assets/song3.mp3',
         },
     ];
+    listeningRoom.value.messages = [
+        { userId: 2, content: '你好！', time: 123456 },
+        { userId: 1, content: '大家准备好听歌了吗？', time: 123456 },
+    ];
     // listenroom.value = await getListeningRoomService(props.param.roomId);
 };
 
@@ -72,13 +73,8 @@ const handleSend = async (content) => {
     // await api.sendMessage(newMsg);
 
     // 添加到消息列表
-    messages.value.push(newMsg);
+    listeningRoom.value.messages.push(newMsg);
 };
-// 聊天记录初始样本
-messages.value = [
-    { userId: 2, content: '你好！', time: 123456 },
-    { userId: 1, content: '大家准备好听歌了吗？', time: 123456 },
-];
 
 // 切换显示成员列表
 const showMember = () => {
@@ -90,6 +86,12 @@ const showMember = () => {
 const showMusic = () => {
     isMusic.value = !isMusic.value;
     if (isMember.value) isMember.value = false;
+};
+
+const handleUserProfile = (userId) => {
+    selectedUserId.value = userId;
+    showProfile.value = !showProfile.value;
+    console.log('handleUserProfile', userId, showProfile.value);
 };
 </script>
 
@@ -110,17 +112,28 @@ const showMusic = () => {
         </div>
         <el-main>
             <div class="chat-area" :class="{ hei: isMember || isMusic }">
-                <ChatWindow :messages="messages" :participants="listeningRoom.members" @send="handleSend" />
+                <ChatWindow
+                    :messages="listeningRoom.messages"
+                    :participants="listeningRoom.members"
+                    @send="handleSend" />
             </div>
-            <div class="muen-list">
-                <div v-if="isMember" class="member-list">
+            <div class="menu-list">
+                <div v-if="isMember">
                     <div class="member-list">
-                        <div v-for="(member, index) in listeningRoom.members" :key="index" class="member-item">
+                        <div
+                            v-for="(member, index) in listeningRoom.members"
+                            :key="index"
+                            @click="handleUserProfile(member.userId)"
+                            class="member-item">
                             <div class="avatar-container">
                                 <AvatarView :imageUrl="member.avatar" />
                             </div>
                             <div class="member-name">{{ member.name }}</div>
                         </div>
+                        <UserProfile
+                            v-if="showProfile"
+                            :userId="selectedUserId"
+                            @close="handleUserProfile" />
                     </div>
                 </div>
                 <div v-if="isMusic" class="music-list">
@@ -142,6 +155,7 @@ const showMusic = () => {
 </template>
 
 <style lang="scss" scoped>
+@use '@/assets/main.scss' as *;
 .listening-room {
     border-radius: 4px;
 
@@ -156,50 +170,30 @@ const showMusic = () => {
         margin: 10px 0; // 增加顶部和底部的间距
     }
     .chat-area {
-        height: 99%;
-        border: 1px solid #ccc;
+        height: calc(100% - 1px);
         display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        position: relative;
+        border: $border2;
         font-size: small;
         &.hei {
             height: calc(50% - 50px);
         }
-        .other-messages {
-            max-width: 200px;
-            margin-bottom: 10px;
-            overflow-y: auto; // 增加滚动条
-            flex-grow: 1; // 使聊天区域自动填充剩余空间
-        }
-
-        .send-button {
-            width: 100%;
-            bottom: 0;
-            display: flex;
-            flex-direction: row;
-            position: absolute;
-        }
-
-        .message {
-            padding: 5px;
-            border-bottom: 1px solid #eee;
-        }
     }
     .member-list {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* 根据需要调整 */
-        gap: 2px; /* 列间距 */
+        grid-template-columns: repeat(auto-fit, minmax(50px, 50px));
+        gap: 2px;
+        justify-content: center;
     }
 
     .member-item {
         display: flex;
         height: 65px;
-        width: 51px;
+        width: 50px;
+        cursor: pointer;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        border: 1px solid #ccc;
+        border: $border2;
         border-radius: 5px;
         .avatar-container {
             width: 35px;
@@ -227,17 +221,17 @@ const showMusic = () => {
     .music-list {
         padding: 10px;
         h3 {
-            margin: 0; // 去掉默认的h3上下间距
-            color: #333; // 设置标题颜色
+            margin: 0;
+            color: #333;
         }
         ul {
-            padding-left: 0; // 去掉列表的内边距
-            list-style-type: none; // 去掉默认的列表样式
-            margin: 0; // 去掉默认的外边距
+            padding-left: 0;
+            list-style-type: none;
+            margin: 0;
         }
         li {
-            margin: 5px 0; // 增加歌曲之间的间距
-            color: #444; // 设置歌曲颜色
+            margin: 5px 0;
+            color: #444;
         }
     }
 }

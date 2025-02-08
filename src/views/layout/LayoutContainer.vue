@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useUserStore, useSongStore } from '@/stores';
 import ProfilePage from '@/views/userView/ProfilePage.vue';
 import logo from '@/assets/logo-192x192.png';
@@ -7,16 +7,10 @@ import nameLogo from '@/assets/juexianlisten.png';
 import { Headset, HomeFilled } from '@element-plus/icons-vue';
 import ThreeContainer from '@/views/component/ThreeContainer.vue';
 import router from '@/router';
-import CoverView from '@/components/AvatarView.vue';
+
 const songStore = useSongStore();
 const userStore = useUserStore();
 const isProfileVisible = ref(false);
-const isThreeVisible = ref(false);
-const viewName = ref('music'); // music:'音乐', room:'音乐室', friend:'好友列表'，collect:'我的收藏', record:'浏览记录', upload:'我的上传'
-const viewId = ref(0);
-
-// 计算属性获取用户信息
-const user = computed(() => userStore.user);
 
 // 切换个人界面的可见性
 const toggleProfile = () => {
@@ -26,10 +20,9 @@ const toggleProfile = () => {
 // 视图切换优化
 const changeContent = (param) => {
     console.log('切换视图', param);
-    if (param.length === 2) viewId.value = param[1];
-    const isSameView = viewName.value === param[0];
-    viewName.value = param[0];
-    isThreeVisible.value = !isSameView || !isThreeVisible.value;
+    const isSameView = userStore.viewParams.name === param.name;
+    userStore.viewParams = param;
+    userStore.isThreeVisible = !isSameView || !userStore.isThreeVisible;
 };
 
 // 登出函数
@@ -46,15 +39,7 @@ const closeProfile = () => {
 };
 
 const closeThreeContainer = () => {
-    isThreeVisible.value = false;
-};
-
-// 切换视图方法
-const changeView = (params) => {
-    if (params[0] === 'friend') viewId.value = params[1];
-    viewName.value = params[0];
-    isThreeVisible.value = true;
-    console.log('切换视图成功！', params[0], viewId.value);
+    userStore.isThreeVisible = false;
 };
 
 onMounted(() => {
@@ -83,7 +68,7 @@ onUnmounted(() => {
                             type="primary"
                             size="small"
                             class="play-btn"
-                            @click="changeContent(['music'])"
+                            @click="changeContent({ name: 'music', param: null })"
                             >播放器</el-button
                         >
                     </div>
@@ -92,19 +77,19 @@ onUnmounted(() => {
                             type="primary"
                             size="small"
                             class="play-btn"
-                            @click="changeContent(['room', userStore.roomId])"
+                            @click="changeContent({ name: 'room', param: userStore.roomId })"
                             >音乐室</el-button
                         >
                     </div>
                 </div>
                 <div class="user-section">
                     <div class="user-info">
-                        <span v-if="!user">加载中...</span>
+                        <span v-if="!userStore.user">加载中...</span>
                         <span v-else
-                            ><strong>{{ user?.username || '未知用户' }}</strong></span
+                            ><strong>{{ userStore.user?.username || '未知用户' }}</strong></span
                         >
                         <div class="avatar-container">
-                            <CoverView :imageUrl="user?.avatar" @click="toggleProfile" />
+                            <AvatarView :imageUrl="userStore.user?.avatar" @click="toggleProfile" />
                         </div>
                     </div>
 
@@ -157,22 +142,17 @@ onUnmounted(() => {
                         </el-menu-item>
                     </el-menu>
                 </div>
-                <div
-                    class="two-column"
-                    :class="{ shrink: isThreeVisible, visible: isProfileVisible }">
+                <div class="two-column">
                     <router-view />
                 </div>
-                <div class="three-container" v-if="isThreeVisible">
-                    <button type="primary" class="close-button" @click="closeThreeContainer">
+                <div class="three-container" v-if="userStore.isThreeVisible">
+                    <button type="button" class="close-button" @click="closeThreeContainer">
                         ×
                     </button>
-                    <ThreeContainer
-                        :params="{ id: viewId }"
-                        :viewName="viewName"
-                        :key="`${viewName}-${viewId}`" />
+                    <ThreeContainer />
                 </div>
                 <div class="profile" v-if="isProfileVisible">
-                    <ProfilePage @close="closeProfile" @action-selected="changeView" />
+                    <ProfilePage @close="closeProfile" />
                 </div>
             </el-main>
 
@@ -190,9 +170,6 @@ onUnmounted(() => {
     width: 100%;
     display: flex;
     flex-direction: column;
-    background-image: url('@/assets/BG.jpg');
-    background-size: cover;
-    background-position: center;
 
     .header {
         display: flex;
@@ -310,23 +287,16 @@ onUnmounted(() => {
         }
 
         .two-column {
-            width: 100%;
+            flex: 1;
             border-left: $border;
             border-right: $border;
             overflow-y: auto; // 添加滚动条
-
-            &.shrink {
-                flex: calc(100% - 400px);
-                &.visible {
-                    flex: calc(100% - 700px);
-                }
-            }
         }
         .three-container {
             display: flex;
             border: $border2;
             border-radius: 4px;
-            width: 400px;
+            width: 350px;
             position: relative;
             .close-button {
                 position: absolute;
@@ -342,15 +312,13 @@ onUnmounted(() => {
         .profile {
             width: 300px;
             height: 100%;
-            background-color: rgb(4, 36, 60);
             overflow-y: auto; // 添加滚动条
         }
     }
     .footer {
         height: 25px;
-        padding-bottom: 1px;
-        margin-bottom: 20px;
-        text-align: center;
+        margin: 0;
+        padding: 0;
         font-size: 12px;
         color: #7d5224;
         display: flex;

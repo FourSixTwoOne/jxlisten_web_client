@@ -28,8 +28,8 @@ export const useSongStore = defineStore(
                 type: 2, // 2: 翻唱
                 likeCount: 0,
                 collectCount: 0,
-                isLiked: false,
-                isCollected: false,
+                isLike: false,
+                isCollect: false,
             },
             {
                 musicId: 1,
@@ -42,8 +42,8 @@ export const useSongStore = defineStore(
                 type: 1, // 1: 原创, 2: 翻唱, 3: 转载
                 likeCount: 0,
                 collectCount: 0,
-                isLiked: false,
-                isCollected: false,
+                isLike: false,
+                isCollect: false,
             },
         ]);
         const currentIndex = ref(-1);
@@ -82,7 +82,14 @@ export const useSongStore = defineStore(
             } else if (playMode.value === PlayMode.SINGLE_LOOP) {
                 audio.value.currentTime = 0;
                 play();
+            } else if (playMode.value === PlayMode.RANDOM) {
+                playRandomSong();
             }
+        };
+
+        const playRandomSong = () => {
+            currentIndex.value = Math.floor(Math.random() * playlist.value.length);
+            play();
         };
 
         const setupAudioListeners = () => {
@@ -105,7 +112,6 @@ export const useSongStore = defineStore(
             cleanup();
             playlist.value = [];
             currentIndex.value = -1;
-            currentSong.value = null;
             currentTime.value = 0;
             totalTime.value = 0;
         };
@@ -206,7 +212,7 @@ export const useSongStore = defineStore(
         };
 
         const toggleMode = () => {
-            playMode.value = (playMode.value + 1) % 2;
+            playMode.value = (playMode.value + 1) % 3;
         };
 
         const addSong = (song) => {
