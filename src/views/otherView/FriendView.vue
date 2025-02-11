@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useUserStore } from '@/stores';
-// import { getUserService } from '@/api/user';
+import { getUserService } from '@/api/user';
 
 const props = defineProps({
     param: {
@@ -19,6 +19,14 @@ const userInfo = ref({
     gender: 0,
     age: 0,
 });
+
+const getFriendInfo = async () => {
+    const res = await getUserService(props.param.userId);
+    if (res.data.code === 1) {
+        userInfo.value = res.data.data;
+    }
+};
+
 const messages = ref([
     {
         content: '你好呀！',
@@ -45,18 +53,6 @@ const handleSend = async (content) => {
 
     // 添加到消息列表
     messages.value.push(newMsg);
-};
-
-const getFriendInfo = async () => {
-    // userInfo.value = await getUserService(props.param.userId);
-    userInfo.value = {
-        username: '示例用户',
-        userId: props.param.userId,
-        image: 'https://via.placeholder.com/150',
-        bio: '这是一个示例 bio',
-        gender: 1,
-        age: 25,
-    };
 };
 
 getFriendInfo();

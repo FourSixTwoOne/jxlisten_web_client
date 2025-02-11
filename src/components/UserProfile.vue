@@ -1,5 +1,7 @@
 <script setup>
 import { useUserStore } from '@/stores';
+import { getUserByIdService } from '@/api/user';
+import { addFriendService } from '@/api/friend';
 import { ref } from 'vue';
 
 const props = defineProps({
@@ -20,7 +22,7 @@ const handleClose = () => {
 
 const handleAddFriend = async () => {
     try {
-        // await friendStore.addFriend(props.user.id);
+        await addFriendService(props.userId);
         ElMessage.success('好友请求已发送');
     } catch (error) {
         ElMessage.error(error.message);
@@ -28,16 +30,8 @@ const handleAddFriend = async () => {
 };
 const user = ref(null);
 const getUser = async () => {
-    // const res = await getUserByIdService(props.user.id);
-    // user.value = res.data.data;
-    user.value = {
-        id: props.userId,
-        name: '张三',
-        gender: 0,
-        age: 18,
-        bio: '我是一个普通用户',
-        avatar: 'https://avatars.githubusercontent.com/u/102040215?v=4',
-    };
+    const res = await getUserByIdService(props.userId);
+    user.value = res.data.data;
 };
 
 const handleChat = () => {
@@ -81,7 +75,7 @@ getUser();
         <div class="modal-container">
             <div class="user-info">
                 <AvatarView :imageUrl="user.avatar" class="profile-avatar" />
-                <h2 class="username">{{ user.name }}</h2>
+                <h2 class="username">{{ user.username }}</h2>
                 <div class="meta-info">
                     <span class="gender">{{ user.gender == 0 ? '男' : '女' }}</span>
                     <span class="age">{{ user.age }}岁</span>

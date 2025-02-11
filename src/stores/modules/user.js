@@ -14,6 +14,8 @@ export const useUserStore = defineStore(
         const removeToken = () => {
             token.value = '';
         };
+        const friendIdList = ref([]);
+        const addrecordsList = ref([]);
         const isThreeVisible = ref(false);
         const viewParams = ref({
             name: '',
@@ -46,6 +48,8 @@ export const useUserStore = defineStore(
             token,
             setToken,
             removeToken,
+            friendIdList,
+            addrecordsList,
             isThreeVisible,
             viewParams,
             user,

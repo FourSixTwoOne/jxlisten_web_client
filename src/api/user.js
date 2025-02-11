@@ -28,8 +28,8 @@
 // // 通过name查询用户列表
 // export const getUserListByNameService = (username) => request.get(`/user/user/list/${username}`);
 
-// // 通过id查询用户列表
-// export const getUserListByIdService = (userId) => request.get(`/user/user/list/${userId}`);
+// // 通过id查询用户信息
+// export const getUserByIdService = (userId) => Request.get(`/user/user/id/${userId}`);
 
 /******************************************************************************************/
 // 模拟后端返回数据进行测试，后端返回result{code: , data:{}, message:''}
@@ -68,7 +68,7 @@ export const loginUserService = (username, password) => {
     });
 };
 
-// 模拟getUserListService
+// 模拟getUserListByNameService
 export const getUserListByNameService = (username) => {
     console.log('getUserListByNameService called with:', { username });
     return new Promise((resolve) => {
@@ -81,39 +81,52 @@ export const getUserListByNameService = (username) => {
                     {
                         userId: 1,
                         username: '陆2壹',
-                        phone: '12345678901',
                         image: '@/assets/logo2.png',
-                        createTime: '2023-05-01 12:00:00',
-                    },
-                ],
-            },
-        });
-    });
-};
-
-// 模拟getUserListByIdService
-export const getUserListByIdService = (userId) => {
-    console.log('getUserListByIdService called with:', { userId });
-    return new Promise((resolve) => {
-        resolve({
-            status: 200,
-            data: {
-                code: 1,
-                message: 'success',
-                data: [
-                    {
-                        userId: 2,
-                        username: '二狗',
-                        phone: '12345678901',
-                        image: '@/assets/logo2.png',
-                        createTime: '2023-05-01 12:00:00',
                     },
                     {
-                        userId: 3,
-                        username: '坨坨',
-                        phone: '12345678901',
+                        userId: 1,
+                        username: '陆2壹',
                         image: '@/assets/logo2.png',
-                        createTime: '2023-05-01 12:00:00',
+                    },
+                    {
+                        userId: 1,
+                        username: '陆2壹',
+                        image: '@/assets/logo2.png',
+                    },
+                    {
+                        userId: 1,
+                        username: '陆2壹',
+                        image: '@/assets/logo2.png',
+                    },
+                    {
+                        userId: 1,
+                        username: '陆2壹',
+                        image: '@/assets/logo2.png',
+                    },
+                    {
+                        userId: 1,
+                        username: '陆2壹',
+                        image: '@/assets/logo2.png',
+                    },
+                    {
+                        userId: 1,
+                        username: '陆2壹',
+                        image: '@/assets/logo2.png',
+                    },
+                    {
+                        userId: 1,
+                        username: '陆2壹',
+                        image: '@/assets/logo2.png',
+                    },
+                    {
+                        userId: 1,
+                        username: '陆2壹',
+                        image: '@/assets/logo2.png',
+                    },
+                    {
+                        userId: 1,
+                        username: '陆2壹',
+                        image: '@/assets/logo2.png',
                     },
                 ],
             },
@@ -209,3 +222,29 @@ export const uploadFileService = (file) => {
         });
     });
 };
+
+// 模拟getUserByIdService
+export const getUserByIdService = (userId) =>{
+    console.log('getUserByIdService called with:', { userId });
+    return new Promise((resolve) => {
+        resolve({
+            status: 200,
+            data: {
+                code: 1,
+                message: 'success',
+                data: {
+                    userId: 1,
+                    username: '陆2壹',
+                    image: '@/assets/logo2.png',
+                    createTime: '2023-05-01 12:00:00',
+                    updateTime: '2023-05-01 12:00:00',
+                    type: '1',
+                    gender: 0,
+                    age: 18,
+                    bio: '平台作者',
+                },
+            },
+        })
+    })
+};
+

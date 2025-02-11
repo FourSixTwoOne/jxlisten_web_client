@@ -2,7 +2,8 @@
 import { ref, onMounted } from 'vue';
 import { debounce } from 'lodash-es';
 import { useUserStore } from '@/stores';
-import { uploadFileService, updateUserService } from '@/api/user.js';
+import { uploadFileService, updateUserService, getUserListByNameService } from '@/api/user';
+import { addFriendService, getFriendStatusService, getFriendsService } from '@/api/friend';
 import {
     EditPen,
     Upload,
@@ -12,7 +13,6 @@ import {
     Loading,
     CircleClose,
 } from '@element-plus/icons-vue';
-import UserProfile from '@/components/UserProfile.vue';
 
 const userInfo = ref({
     userId: '',
@@ -23,16 +23,19 @@ const userInfo = ref({
     bio: '',
 });
 
-const friendList = ref([]);
+const friendList = ref([{ friendId: null, username: '', image: '', isOnline: false }]);
+const addRecords = ref([{ friendId: null, username: '', image: '', createTime: null, status: 0 }]);
+const friendStatusList = ref([{ friendId: null, createTime: null, status: 0 }]); // 0: 已发送请求待处理，1：已接受请求，2：已拒绝请求，4：已删除好友
+
+const isLoading = ref(false);
 const userStore = useUserStore();
 const isEditing = ref(false);
 const imageFile = ref(null);
-const isLoading = ref(false); // 添加加载状态
 const searchResults = ref([]);
 const searchKeyword = ref('');
 const isLoadingSearch = ref(false);
-const isFriendsVisible = ref(false);
-const isProfileVisible = ref(false);
+const isFriendsVisible = ref(0); // 0: 隐藏，1：显示好友列表；2：显示添加情况
+const isUserProfile = ref(false);
 const selectedUserId = ref(null);
 
 const buttonProps = {
@@ -50,87 +53,68 @@ onMounted(() => {
     getUser();
 });
 
-// 获取初始好友列表
+// 获取好友状态列表
+const getFriendsStatus = async () => {
+    try {
+        const res = await getFriendStatusService(userStore.user.userId);
+        if (res.data.code === 1) friendStatusList.value = res.data.data;
+        userStore.friendIdList = [];
+        for (const friendStatus of friendStatusList.value) {
+            if (friendStatus.status === 1) {
+                userStore.friendIdList.push(friendStatus.friendId);
+            }
+            userStore.addrecordsList = [];
+            userStore.addrecordsList.push(friendStatus.friendId);
+        }
+        getFriends();
+        getAddRecords();
+    } catch (error) {
+        ElMessage.error('获取好友状态失败', error);
+    }
+};
+
 const getFriends = async () => {
-    // try {
-    //     friendList.value = res.data;
-    // } catch (error) {
-    //     ElMessage.error('获取好友列表失败');
-    // }
-    friendList.value = [
-        {
-            userId: 1,
-            username: 'John Doe',
-            image: 'https://via.placeholder.com/150',
-            isOnline: true,
-        },
-        {
-            userId: 2,
-            username: 'Jane Smith',
-            image: 'https://via.placeholder.com/150',
-            isOnline: false,
-        },
-        {
-            userId: 3,
-            username: 'Mike Brown',
-            image: 'https://via.placeholder.com/150',
-            isOnline: true,
-        },
-        {
-            userId: 1,
-            username: 'John Doe',
-            image: 'https://via.placeholder.com/150',
-            isOnline: true,
-        },
-        {
-            userId: 2,
-            username: 'Jane Smith',
-            image: 'https://via.placeholder.com/150',
-            isOnline: false,
-        },
-        {
-            userId: 3,
-            username: 'Mike Brown',
-            image: 'https://via.placeholder.com/150',
-            isOnline: true,
-        },
-        {
-            userId: 1,
-            username: 'John Doe',
-            image: 'https://via.placeholder.com/150',
-            isOnline: true,
-        },
-        {
-            userId: 2,
-            username: 'Jane Smith',
-            image: 'https://via.placeholder.com/150',
-            isOnline: false,
-        },
-        {
-            userId: 3,
-            username: 'Mike Brown',
-            image: 'https://via.placeholder.com/150',
-            isOnline: true,
-        },
-        {
-            userId: 1,
-            username: 'John Doe',
-            image: 'https://via.placeholder.com/150',
-            isOnline: true,
-        },
-        {
-            userId: 2,
-            username: 'Jane Smith',
-            image: 'https://via.placeholder.com/150',
-            isOnline: false,
-        },
-        {
-            userId: 3,
-            username: 'Mike Brown',
-            image: 'https://via.placeholder.com/150',
-            isOnline: true,
-        },
-    ];
+    try {
+        friendList.value = [];
+        const res = await getFriendsService(userStore.friendIdList);
+        if (res.data.code === 1) {
+            const fetchedFriends = res.data.data;
+            console.log('fetchedFriends:', fetchedFriends);
+            for (const friend of fetchedFriends)
+                friendList.value.push({
+                    friendId: friend.friendId,
+                    username: friend.username,
+                    image: friend.image,
+                    // TODO 获取好友是否在线
+                });
+        }
+    } catch (error) {
+        ElMessage.error('获取好友列表失败', error);
+    }
+};
+
+const getAddRecords = async () => {
+    try {
+        addRecords.value = [];
+        const res = await getFriendsService(userStore.addrecordsList);
+        if (res.data.code === 1) {
+            const fetchedRecords = res.data.data;
+
+            // 遍历 fetchedRecords，给每个记录添加 status 和 createTime
+            addRecords.value = fetchedRecords.map((record) => {
+                const friendStatus = friendStatusList.value.find(
+                    (status) => status.friendId === record.friendId
+                );
+                return {
+                    ...record,
+                    status: friendStatus ? friendStatus.status : null,
+                    createTime: friendStatus ? friendStatus.createTime : null,
+                };
+            });
+        }
+    } catch (error) {
+        ElMessage.error('获取添加记录失败', error);
+    }
 };
 
 // 切换编辑状态
@@ -140,6 +124,42 @@ const editProfile = () => {
 
 const cancelEvent = () => {
     ElMessage.warning('取消修改');
+};
+
+// 状态文本映射
+const statusMap = {
+    0: '待处理',
+    1: '已接受',
+    2: '已拒绝',
+    3: '已删除',
+};
+
+// 状态样式映射
+const statusClassMap = {
+    0: 'status-pending',
+    1: 'status-accepted',
+    2: 'status-rejected',
+    3: 'status-deleted',
+};
+
+// 添加记录的状态文本显示
+const getStatusText = (status) => {
+    return statusMap[status] || '未知状态';
+};
+
+// 添加记录的状态样式
+const getStatusClass = (status) => {
+    return statusClassMap[status] || '';
+};
+
+// 时间格式化方法
+const formatTime = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date
+        .getDate()
+        .toString()
+        .padStart(2, '0')}`;
 };
 
 // 提交修改
@@ -165,8 +185,16 @@ const submitProfile = async () => {
 };
 
 // 切换好友列表的显示状态
-const toggleFriendsList = () => {
-    isFriendsVisible.value = !isFriendsVisible.value;
+const toggleFriendsList = (param) => {
+    if (isFriendsVisible.value === param) {
+        isFriendsVisible.value = 0;
+    } else {
+        isFriendsVisible.value = param;
+        // 当切换到添加记录时刷新数据
+        if (param === 2) {
+            getAddRecords();
+        }
+    }
 };
 
 const toggleView = (viewParams) => {
@@ -184,16 +212,10 @@ const handleSearch = debounce(async () => {
 
     isLoadingSearch.value = true;
     try {
-        ElMessage.info('正在搜索...');
-        // searchResults.value= await userStore.
-        searchResults.value = [
-            {
-                userId: 1,
-                username: 'John Doe',
-                image: 'https://via.placeholder.com/150',
-                isOnline: true,
-            },
-        ];
+        const res = await getUserListByNameService(searchKeyword.value);
+        if (res.data.code === 1) {
+            searchResults.value = res.data.data;
+        }
     } finally {
         isLoadingSearch.value = false;
     }
@@ -208,7 +230,7 @@ const addFriend = async (userId) => {
             type: 'warning',
         })
             .then(async () => {
-                // await addFriend(userId);
+                await addFriendService(userId);
                 console.log('添加好友', userId);
             })
             .catch(() => {
@@ -221,12 +243,12 @@ const addFriend = async (userId) => {
 
 const toggleUserProfile = (userId) => {
     selectedUserId.value = userId;
-    isProfileVisible.value = !isProfileVisible.value;
+    isUserProfile.value = !isUserProfile.value;
 };
 
-// 初始化获取好友列表
 onMounted(() => {
-    getFriends();
+    getFriendsStatus();
+    console.log('userStore.friendIdList', userStore.friendIdList, friendList.value);
 });
 </script>
 
@@ -311,72 +333,100 @@ onMounted(() => {
                 ><el-icon><CircleClose /></el-icon>
             </el-button>
         </div>
-        <UserProfile
-            v-if="isProfileVisible"
-            :userId="selectedUserId"
-            @close="isProfileVisible = false" />
+        <UserProfile v-if="isUserProfile" :userId="selectedUserId" @close="isUserProfile = false" />
         <div class="actions">
             <div class="friend">
-                <el-button v-bind="buttonProps" @click="toggleFriendsList">好友列表</el-button>
-                <div v-if="isFriendsVisible" class="friend-search-container">
-                    <el-input
-                        class="search-input"
-                        v-model="searchKeyword"
-                        placeholder="输入昵称添加用户"
-                        :prefix-icon="Search"
-                        clearable
-                        @input="handleSearch" />
-
-                    <div class="search-results">
-                        <div v-if="isLoadingSearch" class="loading-container">
-                            <el-icon class="is-loading"><Loading /></el-icon>
-                            搜索中...
-                        </div>
-
-                        <template v-else>
-                            <ul v-if="searchKeyword && searchResults.length">
-                                <li
-                                    v-for="user in searchResults"
-                                    :key="user.userId"
-                                    class="result-item"
-                                    @click="toggleUserProfile(user.userId)">
-                                    <div class="friend-info">
-                                        <AvatarView :imageUrl="user.avatar" class="friend-avatar" />
-                                        <span class="username">{{ user.username }}</span>
-                                    </div>
-                                    <el-button
-                                        class="add-button"
-                                        circle
-                                        size="small"
-                                        :icon="Plus"
-                                        @click="addFriend(user.userId)" />
-                                </li>
-                            </ul>
-
-                            <ul v-else class="friend-list">
-                                <li
-                                    v-for="friend in friendList"
-                                    :key="friend.userId"
-                                    class="friend-item"
-                                    @click="toggleUserProfile(friend.userId)">
-                                    <div class="friend-info">
-                                        <AvatarView
-                                            :imageUrl="friend.avatar"
-                                            class="friend-avatar" />
-                                        <div class="info">
-                                            <span class="username">{{ friend.username }}</span>
-                                            <div class="status">
-                                                <div
-                                                    class="status-dot"
-                                                    :class="{ online: friend.isOnline }" />
-                                                <span>{{ friend.isOnline ? '在线' : '离线' }}</span>
+                <div class="friend-status">
+                    <el-button v-bind="buttonProps" @click="toggleFriendsList(1)"
+                        >好友列表</el-button
+                    >
+                    <el-button v-bind="buttonProps" @click="toggleFriendsList(2)"
+                        >添加记录</el-button
+                    >
+                </div>
+                <div v-if="[1, 2].includes(isFriendsVisible)" class="list-area">
+                    <div class="list-container" v-if="isFriendsVisible === 1">
+                        <el-input
+                            v-if="isFriendsVisible === 1"
+                            v-model="searchKeyword"
+                            placeholder="输入昵称添加用户"
+                            :prefix-icon="Search"
+                            clearable
+                            @input="handleSearch" />
+                        <div>
+                            <div v-if="isLoadingSearch" class="loading-container">
+                                <el-icon><Loading /></el-icon>搜索中...
+                            </div>
+                            <template v-else>
+                                <ul
+                                    v-if="searchKeyword && searchResults.length"
+                                    class="friend-list">
+                                    <li
+                                        v-for="user in searchResults"
+                                        :key="user.userId"
+                                        @click="toggleUserProfile(user.userId)">
+                                        <div class="friend-info">
+                                            <AvatarView
+                                                :imageUrl="user.avatar"
+                                                class="friend-avatar" />
+                                            <span class="username">{{ user.username }}</span>
+                                        </div>
+                                        <el-button
+                                            class="add-button"
+                                            size="small"
+                                            :icon="Plus"
+                                            @click="addFriend(user.userId)" />
+                                    </li>
+                                </ul>
+                                <ul v-else class="friend-list">
+                                    <li
+                                        v-for="friend in friendList"
+                                        :key="friend.userId"
+                                        @click="toggleUserProfile(friend.userId)">
+                                        <div class="friend-info">
+                                            <AvatarView
+                                                :imageUrl="friend.avatar"
+                                                class="friend-avatar" />
+                                            <div class="info">
+                                                <span class="username">{{ friend.username }}</span>
+                                                <div class="status">
+                                                    <div
+                                                        class="status-dot"
+                                                        :class="{ online: friend.isOnline }" />
+                                                    <span>{{
+                                                        friend.isOnline ? '在线' : '离线'
+                                                    }}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </li>
-                            </ul>
-                        </template>
+                                    </li>
+                                </ul>
+                            </template>
+                        </div>
                     </div>
+                    <template v-if="isFriendsVisible === 2">
+                        <ul class="friend-list">
+                            <li
+                                v-for="record in addRecords"
+                                :key="record.friendId"
+                                @click="toggleUserProfile(record.friendId)">
+                                <div class="friend-info">
+                                    <AvatarView :imageUrl="record.image" class="friend-avatar" />
+                                    <div class="info">
+                                        <span class="username">{{ record.username }}</span>
+                                        <div class="status">
+                                            <span class="time">{{
+                                                formatTime(record.createTime)
+                                            }}</span>
+                                            <span :class="getStatusClass(record.status)">{{
+                                                getStatusText(record.status)
+                                            }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </template>
                 </div>
             </div>
             <el-button
@@ -484,26 +534,22 @@ onMounted(() => {
         border: $border2;
         border-radius: 4px;
 
-        .favorite-btn {
-            margin-top: 5px;
-            margin-left: 0;
-        }
-
         .el-dropdown,
         .el-button {
             width: 103px;
             margin-bottom: 3px;
         }
-        .friend-search-container {
+        .list-area {
             .el-input {
                 height: 25px;
                 border-bottom: $border2;
                 border-top: $border2;
             }
 
-            .search-results {
-                max-height: 295px;
-                overflow-y: auto;
+            .friend-list {
+                display: flex;
+                flex-direction: column;
+                height: 300px;
                 border: $border2;
                 border-radius: 4px;
                 margin-top: 4px;
@@ -526,12 +572,9 @@ onMounted(() => {
                 }
             }
 
-            .friend-list {
+            ul {
                 min-height: 100px;
                 overflow-y: auto;
-            }
-
-            ul {
                 list-style: none;
                 padding: 0;
                 margin: 0;
@@ -567,7 +610,15 @@ onMounted(() => {
                     gap: 6px;
                     font-size: 12px;
                     color: #909399;
-
+                    &-accepted {
+                        color: #67c23a;
+                    } // 绿色
+                    &-rejected {
+                        color: #f56c6c;
+                    } // 红色
+                    &-deleted {
+                        color: #909399;
+                    } // 灰色
                     &-dot {
                         width: 8px;
                         height: 8px;
@@ -578,17 +629,27 @@ onMounted(() => {
                             background: #67c23a;
                         }
                     }
+                    &-pending {
+                        color: #e6a23c;
+                    } // 橙色
+
+                    .time {
+                        font-size: 12px;
+                        color: #909399;
+                        margin-right: 8px;
+                    }
+                }
+                .info {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
                 }
             }
         }
 
-        @keyframes rotating {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
+        .favorite-btn {
+            margin-top: 5px;
+            margin-left: 0;
         }
     }
 }

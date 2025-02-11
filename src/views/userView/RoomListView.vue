@@ -1,7 +1,7 @@
 <script setup>
 import { Search, Upload, User, Clock } from '@element-plus/icons-vue';
 import defaultCover from '@/assets/cover.jpg';
-import { createListeningRoomService, getListeningRoomListService } from '@/api/ListeningRoom';
+import { createListeningRoomService, getListeningRoomListService } from '@/api/listenRoom';
 import { uploadFileService } from '@/api/user';
 
 import { ref } from 'vue';

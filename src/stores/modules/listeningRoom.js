@@ -1,14 +1,15 @@
 //******************* 储存用户信息 *******************\\
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
-import { getRoomService } from '@/api/listeningRoom';
+import { getRoomService } from '@/api/listenRoom';
+
 export const useRoomStore = defineStore(
     'room',
     () => {
         const room = ref({
             roomId: '',
             roomName: '',
-            createName: '',
+            createdName: '',
             type: '',
             coverUrl: '',
             createTime: '',
@@ -17,7 +18,7 @@ export const useRoomStore = defineStore(
         });
         const getRoom = async () => {
             const res = await getRoomService();
-            if (res.status === 200) {
+            if (res.data.code === 1) {
                 room.value = res.data.data;
             }
 

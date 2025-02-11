@@ -49,7 +49,6 @@ const toggleActionButtons = () => {
                         class="ellipsis-button"
                         @click.stop="toggleActionButtons">
                         <el-icon :class="{ rotate: showActionButtons }">
-                            <!-- 使用单个箭头图标 -->
                             <ArrowLeftBold />
                         </el-icon>
                     </el-button>
