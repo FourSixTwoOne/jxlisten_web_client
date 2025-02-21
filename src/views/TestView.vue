@@ -10,7 +10,7 @@ const sendMsg = ref({ content: '', targetId: '', channelType: '' });
 const send = (msg) => {
     sendMsg.value.content = msg;
     sendMsg.value.targetId = user.value.userId;
-    sendMsg.value.channelType = chatStore.MessageType.FRIEND;
+    sendMsg.value.channelType = chatStore.ChannelType.FRIEND;
     console.log('sendMsg:::', sendMsg.value);
     chatStore.sendMessage(sendMsg.value);
 };

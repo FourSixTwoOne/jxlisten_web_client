@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { useUserStore, useChatStore } from '@/stores';
 import { getUserByIdService } from '@/api/user';
 import { ArrowUpBold } from '@element-plus/icons-vue';
+import { ChannelType } from '@/api/websocket';
 
 const props = defineProps({
     param: {
@@ -41,7 +42,7 @@ const getFriendInfo = async () => {
 };
 
 const messages = computed(() => {
-    return chatStore.getMessages(chatStore.MessageType.FRIEND, userInfo.value.userId);
+    return chatStore.getMessages(ChannelType.FRIEND, userInfo.value.userId, userStore.user.userId);
 });
 
 // 处理消息发送
@@ -49,7 +50,7 @@ const handleSend = async (content) => {
     const newMsg = {
         senderId: userStore.user.userId,
         content: content,
-        channelType: chatStore.MessageType.FRIEND,
+        channelType: ChannelType.FRIEND,
         targetId: userInfo.value.userId,
     };
     chatStore.sendMessage(newMsg);
@@ -63,8 +64,8 @@ const cleanChat = (userId) => {
         type: 'warning',
     }).then(() => {
         // 清空聊天记录
-        chatStore.clearMessages(chatStore.MessageType.FRIEND, userId);
-        chatStore.getMessages(chatStore.MessageType.FRIEND, userId);
+        chatStore.clearMessages(ChannelType.FRIEND, userId);
+        chatStore.getMessages(ChannelType.FRIEND, userId);
     });
 };
 

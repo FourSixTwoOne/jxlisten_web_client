@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useUserStore, useChatStore } from '@/stores';
+import { ChannelType } from '@/api/websocket';
 
 const userStore = useUserStore();
 const chatStore = useChatStore();
@@ -18,7 +19,7 @@ const listeningRoom = ref({
 });
 
 const messages = computed(() => {
-    return chatStore.getMessages(chatStore.MessageType.LISTENING_ROOM, listeningRoom.value.roomId);
+    return chatStore.getMessages(ChannelType.LISTENING_ROOM, listeningRoom.value.roomId, userStore.user.userId);
 });
 const currentSongIndex = ref(0);
 const currentSong = ref(listeningRoom.value.playlist[currentSongIndex.value]);
@@ -66,7 +67,7 @@ const handleSend = async (content) => {
     const newMsg = {
         content,
         senderId: userStore.user.userId,
-        channelType: chatStore.MessageType.ROOM,
+        channelType: ChannelType.ROOM,
         targetId: listeningRoom.value.roomId,
     };
 
