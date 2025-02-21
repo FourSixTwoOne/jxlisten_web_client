@@ -1,9 +1,8 @@
 //******************* axios *******************\\
 import axios from 'axios';
 import { useUserStore } from '@/stores';
-import { ElMessage } from 'element-plus';
-const baseURL = '/api';
 import router from '@/router';
+const baseURL = '/api';
 
 // 基础地址，超时时间
 const instance = axios.create({

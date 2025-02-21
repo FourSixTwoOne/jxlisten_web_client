@@ -1,9 +1,16 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { debounce } from 'lodash-es';
 import { useUserStore } from '@/stores';
 import { uploadFileService, updateUserService, getUserListByNameService } from '@/api/user';
-import { addFriendService, getFriendStatusService, getFriendsService } from '@/api/friend';
+import { timeFormat } from '@/utils/dateFormat';
+import {
+    addFriendService,
+    getFriendsService,
+    getSendService,
+    getReceivedService,
+    handleFriendService,
+} from '@/api/friend';
 import {
     EditPen,
     Upload,
@@ -14,19 +21,11 @@ import {
     CircleClose,
 } from '@element-plus/icons-vue';
 
-const userInfo = ref({
-    userId: '',
-    username: '',
-    image: '',
-    gender: 0,
-    age: 0,
-    bio: '',
-});
-
-const friendList = ref([{ friendId: null, username: '', image: '', isOnline: false }]);
-const addRecords = ref([{ friendId: null, username: '', image: '', createTime: null, status: 0 }]);
-const friendStatusList = ref([{ friendId: null, createTime: null, status: 0 }]); // 0: 已发送请求待处理，1：已接受请求，2：已拒绝请求，4：已删除好友
-
+// 状态管理
+const userInfo = ref({ userId: '', username: '', image: '', gender: 0, age: 0, bio: '' });
+const friendList = ref([]);
+const receivedRecords = ref([]);
+const sendRecords = ref([]);
 const isLoading = ref(false);
 const userStore = useUserStore();
 const isEditing = ref(false);
@@ -34,137 +33,97 @@ const imageFile = ref(null);
 const searchResults = ref([]);
 const searchKeyword = ref('');
 const isLoadingSearch = ref(false);
-const isFriendsVisible = ref(0); // 0: 隐藏，1：显示好友列表；2：显示添加情况
+const isFriendsVisible = ref(0); // 0: 隐藏，1: 显示好友列表；2: 显示添加情况
 const isUserProfile = ref(false);
 const selectedUserId = ref(null);
+const activeTab = ref('receive'); // 当前活动标签
 
-const buttonProps = {
-    color: '#a0a20a',
-    size: 'small',
-    plain: true,
-};
+// 计算属性
+const receivedRecordsSorted = computed(() => {
+    return [...receivedRecords.value].sort((a, b) => {
+        if (a.type === 0 && b.type !== 0) return -1;
+        if (a.type !== 0 && b.type === 0) return 1;
+        return new Date(b.createTime) - new Date(a.createTime);
+    });
+});
 
+const sendRecordsSorted = computed(() => {
+    return [...sendRecords.value].sort((a, b) => {
+        if (a.type === 0 && b.type !== 0) return -1;
+        if (a.type !== 0 && b.type === 0) return 1;
+        return new Date(b.createTime) - new Date(a.createTime);
+    });
+});
+
+const activeRecords = computed(() => {
+    return activeTab.value === 'receive' ? receivedRecordsSorted.value : sendRecordsSorted.value;
+});
+
+const receivedUnreadCount = computed(
+    () => receivedRecords.value.filter((r) => r.type === 0).length
+);
+const sendUnreadCount = computed(() => sendRecords.value.filter((r) => r.type === 0).length);
+
+// API 调用
 const getUser = async () => {
     await userStore.getUser();
     userInfo.value = userStore.user;
 };
 
-onMounted(() => {
-    getUser();
-});
-
-// 获取好友状态列表
-const getFriendsStatus = async () => {
+const getFriendsList = async () => {
+    userStore.friendIds = [];
     try {
-        const res = await getFriendStatusService(userStore.user.userId);
-        if (res.data.code === 1) friendStatusList.value = res.data.data;
-        userStore.friendIdList = [];
-        for (const friendStatus of friendStatusList.value) {
-            if (friendStatus.status === 1) {
-                userStore.friendIdList.push(friendStatus.friendId);
-            }
-            userStore.addrecordsList = [];
-            userStore.addrecordsList.push(friendStatus.friendId);
+        const res = await getFriendsService(userStore.user.userId);
+        if (res.data.code === 1) {
+            friendList.value = res.data.data;
+            userStore.friendIds = friendList.value.map((friend) => friend.friendId);
+            console.log('好友id列表：', userStore.friendIds.value);
         }
-        getFriends();
-        getAddRecords();
     } catch (error) {
         ElMessage.error('获取好友状态失败', error);
     }
 };
 
-const getFriends = async () => {
+const getSendRecords = async () => {
     try {
-        friendList.value = [];
-        const res = await getFriendsService(userStore.friendIdList);
-        if (res.data.code === 1) {
-            const fetchedFriends = res.data.data;
-            console.log('fetchedFriends:', fetchedFriends);
-            for (const friend of fetchedFriends)
-                friendList.value.push({
-                    friendId: friend.friendId,
-                    username: friend.username,
-                    image: friend.image,
-                    // TODO 获取好友是否在线
-                });
-        }
-    } catch (error) {
-        ElMessage.error('获取好友列表失败', error);
-    }
-};
-
-const getAddRecords = async () => {
-    try {
-        addRecords.value = [];
-        const res = await getFriendsService(userStore.addrecordsList);
-        if (res.data.code === 1) {
-            const fetchedRecords = res.data.data;
-
-            // 遍历 fetchedRecords，给每个记录添加 status 和 createTime
-            addRecords.value = fetchedRecords.map((record) => {
-                const friendStatus = friendStatusList.value.find(
-                    (status) => status.friendId === record.friendId
-                );
-                return {
-                    ...record,
-                    status: friendStatus ? friendStatus.status : null,
-                    createTime: friendStatus ? friendStatus.createTime : null,
-                };
-            });
-        }
+        const res = await getSendService();
+        if (res.data.code === 1) sendRecords.value = res.data.data;
     } catch (error) {
         ElMessage.error('获取添加记录失败', error);
     }
 };
 
-// 切换编辑状态
-const editProfile = () => {
-    isEditing.value = true;
+const getReceivedRecords = async () => {
+    try {
+        const res = await getReceivedService();
+        if (res.data.code === 1) receivedRecords.value = res.data.data;
+    } catch (error) {
+        ElMessage.error('获取添加记录失败', error);
+    }
 };
 
-const cancelEvent = () => {
-    ElMessage.warning('取消修改');
+// 处理记录点击
+const handleRecordClick = (record) => {
+    if (!(activeTab.value === 'receive' && record.status === 0)) {
+        toggleUserProfile(record.friendId);
+    }
 };
 
-// 状态文本映射
-const statusMap = {
-    0: '待处理',
-    1: '已接受',
-    2: '已拒绝',
-    3: '已删除',
+// 申请处理
+const handleApply = async (param) => {
+    try {
+        await handleFriendService(param);
+        getFriendsList;
+        getSendRecords();
+        getReceivedRecords();
+    } catch (error) {
+        ElMessage.error('操作失败', error);
+    }
 };
 
-// 状态样式映射
-const statusClassMap = {
-    0: 'status-pending',
-    1: 'status-accepted',
-    2: 'status-rejected',
-    3: 'status-deleted',
-};
-
-// 添加记录的状态文本显示
-const getStatusText = (status) => {
-    return statusMap[status] || '未知状态';
-};
-
-// 添加记录的状态样式
-const getStatusClass = (status) => {
-    return statusClassMap[status] || '';
-};
-
-// 时间格式化方法
-const formatTime = (timestamp) => {
-    if (!timestamp) return '';
-    const date = new Date(timestamp);
-    return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date
-        .getDate()
-        .toString()
-        .padStart(2, '0')}`;
-};
-
-// 提交修改
+// 提交用户资料修改
 const submitProfile = async () => {
-    isLoading.value = true; // 开始加载
+    isLoading.value = true;
     try {
         if (imageFile.value) {
             const formData = new FormData();
@@ -180,75 +139,127 @@ const submitProfile = async () => {
     } catch (error) {
         ElMessage.error('提交用户信息失败:', error);
     } finally {
-        isLoading.value = false; // 结束加载
+        isLoading.value = false;
     }
 };
 
-// 切换好友列表的显示状态
+// 切换界面显示
+const toggleView = (param) => {
+    userStore.isThreeVisible = true;
+    userStore.viewParams = param;
+};
+
+// 切换好友列表显示状态
 const toggleFriendsList = (param) => {
     if (isFriendsVisible.value === param) {
         isFriendsVisible.value = 0;
     } else {
         isFriendsVisible.value = param;
-        // 当切换到添加记录时刷新数据
-        if (param === 2) {
-            getAddRecords();
+        if (param === 1) getFriendsList();
+        else if (param === 2) {
+            getSendRecords();
+            getReceivedRecords();
         }
     }
 };
 
-const toggleView = (viewParams) => {
-    console.log('显示好友主页', viewParams);
-    userStore.viewParams = viewParams;
-    userStore.isThreeVisible = true;
-};
-// 带防抖的搜索方法
+// 搜索功能
 const handleSearch = debounce(async () => {
     if (!searchKeyword.value.trim()) {
-        // 如果搜索关键字为空，则清空搜索结果
         searchResults.value = [];
         return;
     }
-
     isLoadingSearch.value = true;
     try {
         const res = await getUserListByNameService(searchKeyword.value);
         if (res.data.code === 1) {
             searchResults.value = res.data.data;
+            console.log('搜索到数据：', searchResults.value);
         }
     } finally {
         isLoadingSearch.value = false;
     }
 }, 500);
 
-// 添加好友方法
+// 添加好友
 const addFriend = async (userId) => {
     try {
-        ElMessageBox.confirm('确定要添加好友吗？', '提示', {
+        await ElMessageBox.confirm('确定要添加好友吗？', '提示', {
             confirmButtonText: '确定',
             cancelButtonText: '取消',
             type: 'warning',
         })
             .then(async () => {
-                await addFriendService(userId);
-                console.log('添加好友', userId);
+                const res = await addFriendService(userId);
+                if (res.data.code === 1) {
+                    ElMessage.success('已发送请求');
+                } else {
+                    ElMessage.error('添加失败', res.data.msg); // 显示错误消息
+                }
             })
             .catch(() => {
-                ElMessage.info('已取消添加好友');
+                ElMessage.info('已取消添加好友'); // 取消添加好友操作
             });
     } catch (error) {
-        ElMessage.error('操作失败', error);
+        ElMessage.error('操作失败', error); // 显示操作失败消息
     }
 };
 
+// 切换用户资料显示状态
 const toggleUserProfile = (userId) => {
     selectedUserId.value = userId;
-    isUserProfile.value = !isUserProfile.value;
+    isUserProfile.value = !isUserProfile.value; // 切换用户资料显示状态
 };
 
+// 切换编辑状态
+const editProfile = () => {
+    isEditing.value = true; // 设置为编辑状态
+};
+
+// 取消编辑操作
+const cancelEvent = () => {
+    ElMessage.warning('取消修改'); // 显示取消修改提示
+};
+
+// 状态文本映射
+const statusMap = {
+    0: '待处理',
+    1: '已接受',
+    2: '已拒绝',
+    3: '关系已解除',
+};
+
+// 状态样式映射
+const statusClassMap = {
+    0: 'status-pending',
+    1: 'status-accepted',
+    2: 'status-rejected',
+    3: 'status-deleted',
+};
+
+// 定义按钮属性
+const buttonProps = {
+    color: '#a0a20a',
+    size: 'small',
+    plain: true,
+};
+
+// 获取状态的文本
+const getStatusText = (status) => {
+    return statusMap[status] || '未知状态'; // 返回状态对应的文本
+};
+
+// 获取状态的样式
+const getStatusClass = (status) => {
+    return statusClassMap[status] || ''; // 返回状态对应的样式
+};
+
+// 组件挂载后获取用户和记录
 onMounted(() => {
-    getFriendsStatus();
-    console.log('userStore.friendIdList', userStore.friendIdList, friendList.value);
+    getUser();
+    getFriendsList();
+    getReceivedRecords();
+    getSendRecords();
 });
 </script>
 
@@ -367,7 +378,7 @@ onMounted(() => {
                                         @click="toggleUserProfile(user.userId)">
                                         <div class="friend-info">
                                             <AvatarView
-                                                :imageUrl="user.avatar"
+                                                :imageUrl="user.image"
                                                 class="friend-avatar" />
                                             <span class="username">{{ user.username }}</span>
                                         </div>
@@ -381,11 +392,11 @@ onMounted(() => {
                                 <ul v-else class="friend-list">
                                     <li
                                         v-for="friend in friendList"
-                                        :key="friend.userId"
-                                        @click="toggleUserProfile(friend.userId)">
+                                        :key="friend.friendId || index"
+                                        @click="toggleUserProfile(friend.friendId)">
                                         <div class="friend-info">
                                             <AvatarView
-                                                :imageUrl="friend.avatar"
+                                                :imageUrl="friend.image"
                                                 class="friend-avatar" />
                                             <div class="info">
                                                 <span class="username">{{ friend.username }}</span>
@@ -396,6 +407,11 @@ onMounted(() => {
                                                     <span>{{
                                                         friend.isOnline ? '在线' : '离线'
                                                     }}</span>
+                                                    <span
+                                                        v-if="friend.unreadCount > 0"
+                                                        class="unread-badge">
+                                                        {{ friend.unreadCount }}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -405,33 +421,84 @@ onMounted(() => {
                         </div>
                     </div>
                     <template v-if="isFriendsVisible === 2">
-                        <ul class="friend-list">
-                            <li
-                                v-for="record in addRecords"
-                                :key="record.friendId"
-                                @click="toggleUserProfile(record.friendId)">
-                                <div class="friend-info">
-                                    <AvatarView :imageUrl="record.image" class="friend-avatar" />
-                                    <div class="info">
-                                        <span class="username">{{ record.username }}</span>
-                                        <div class="status">
-                                            <span class="time">{{
-                                                formatTime(record.createTime)
-                                            }}</span>
-                                            <span :class="getStatusClass(record.status)">{{
-                                                getStatusText(record.status)
-                                            }}</span>
-                                        </div>
-                                    </div>
+                        <div class="tabs-container">
+                            <div class="tabs">
+                                <div
+                                    class="tab"
+                                    :class="{ active: activeTab === 'receive' }"
+                                    @click="activeTab = 'receive'">
+                                    接收请求
+                                    <span v-if="receivedUnreadCount > 0" class="unread-bubble">
+                                        {{ receivedUnreadCount }}
+                                    </span>
                                 </div>
-                            </li>
-                        </ul>
+                                <div
+                                    class="tab"
+                                    :class="{ active: activeTab === 'send' }"
+                                    @click="activeTab = 'send'">
+                                    发送请求
+                                    <span v-if="sendUnreadCount > 0" class="unread-bubble">
+                                        {{ sendUnreadCount }}
+                                    </span>
+                                </div>
+                            </div>
+                            <ul class="friend-list">
+                                <li
+                                    v-for="record in activeRecords"
+                                    :key="record.friendId"
+                                    @click="handleRecordClick(record)">
+                                    <div class="friend-info">
+                                        <AvatarView
+                                            :imageUrl="record.image"
+                                            class="friend-avatar" />
+                                        <div class="info">
+                                            <span class="username">{{ record.username }}</span>
+                                            <div class="status">
+                                                <span class="time">{{
+                                                    timeFormat(record.createTime)
+                                                }}</span>
+                                                <span :class="getStatusClass(record.status)">
+                                                    {{ getStatusText(record.status) }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="action-area"
+                                            v-if="activeTab === 'receive' && record.status === 0">
+                                            <el-button
+                                                type="success"
+                                                size="small"
+                                                @click.stop="
+                                                    handleApply({
+                                                        friendId: record.friendId,
+                                                        status: 1,
+                                                    })
+                                                "
+                                                >接受</el-button
+                                            >
+                                            <el-button
+                                                type="danger"
+                                                size="small"
+                                                @click.stop="
+                                                    handleApply({
+                                                        friendId: record.friendId,
+                                                        status: 2,
+                                                    })
+                                                "
+                                                >拒绝</el-button
+                                            >
+                                        </div>
+                                        <span v-else-if="record.type === 0" class="red-dot"></span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
                     </template>
                 </div>
             </div>
             <el-button
                 v-bind="buttonProps"
-                @click="toggleView({ name: 'favorites' })"
+                @click="toggleView({ name: 'favorites', param: userInfo?.userId })"
                 class="favorite-btn"
                 >收藏歌曲</el-button
             >
@@ -638,6 +705,13 @@ onMounted(() => {
                         color: #909399;
                         margin-right: 8px;
                     }
+                    .unread-badge {
+                        background: #f56c6c;
+                        color: white;
+                        border-radius: 10px;
+                        padding: 2px 6px;
+                        font-size: 12px;
+                    }
                 }
                 .info {
                     display: flex;
@@ -651,6 +725,73 @@ onMounted(() => {
             margin-top: 5px;
             margin-left: 0;
         }
+    }
+    .tabs-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .tabs {
+        display: flex;
+        border-bottom: 1px solid #5a83c5;
+    }
+
+    .tab {
+        position: relative;
+        padding: 8px 16px;
+        cursor: pointer;
+        color: #909399;
+        transition: all 0.3s;
+
+        &.active {
+            color: #409eff;
+            border-bottom: 2px solid #409eff;
+        }
+    }
+
+    .unread-bubble {
+        position: absolute;
+        top: -3px;
+        right: -6px;
+        background: #f56c6c;
+        color: white;
+        border-radius: 10px;
+        min-width: 16px;
+        height: 16px;
+        font-size: 12px;
+        line-height: 16px;
+        text-align: center;
+        padding: 0 4px;
+    }
+
+    .red-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #f56c6c;
+        margin-left: auto;
+        margin-right: 8px;
+    }
+
+    .action-area {
+        margin-left: auto;
+        display: flex;
+        padding-right: 8px;
+
+        .el-button {
+            width: 28px;
+            padding: 5px 10px;
+            font-size: 10px;
+        }
+    }
+
+    .friend-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding-right: 8px;
     }
 }
 </style>

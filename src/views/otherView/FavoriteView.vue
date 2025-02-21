@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useSongStore } from '@/stores/modules/song';
+import { MoreFilled } from '@element-plus/icons-vue';
 
 const songStore = useSongStore();
 
@@ -43,7 +44,7 @@ const deleteSelected = async () => {
 
 // 单曲操作
 const handleUncollect = (song) => {
-        favoriteSongs.value = favoriteSongs.value.filter((s) => s.id !== song.id);
+    favoriteSongs.value = favoriteSongs.value.filter((s) => s.id !== song.id);
 };
 
 const handleReport = (song) => {
@@ -61,7 +62,7 @@ const handleReport = (song) => {
         <h3>收藏列表</h3>
         <div class="action-bar">
             <el-button type="primary" @click="playAll">
-            <i class="icon-play" /> 播放全部
+                <i class="icon-play" /> 播放全部
             </el-button>
 
             <div class="right-actions">
@@ -94,7 +95,8 @@ const handleReport = (song) => {
 
                 <!-- 操作菜单 -->
                 <el-dropdown v-if="!isMultiSelect" @click.stop>
-                    <el-button type="text" class="more-btn">
+                    <el-button class="more-btn">
+                        <el-icon><MoreFilled /></el-icon>
                         <i class="icon-more" />
                     </el-button>
                     <template #dropdown>
@@ -143,7 +145,7 @@ const handleReport = (song) => {
             cursor: pointer;
 
             &:hover {
-                background: #f5f5f5;
+                background: #4a93a4;
             }
 
             .multi-checkbox {
@@ -168,8 +170,11 @@ const handleReport = (song) => {
             }
 
             .more-btn {
-                padding: 8px;
-                margin-left: auto;
+                display: flex;
+                width: 20px;
+                height: 20px;
+                padding: 4px;
+                font-size: 10px;
             }
         }
     }
@@ -180,7 +185,7 @@ const handleReport = (song) => {
         left: 50%;
         transform: translateX(-50%);
         padding: 16px;
-        background: white;
+        background: rgb(77, 60, 60);
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
         border-radius: 8px;
     }

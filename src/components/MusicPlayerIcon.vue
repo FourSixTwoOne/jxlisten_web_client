@@ -49,4 +49,11 @@ const togglePlayer = async () => {
     </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.el-button {
+    height: 24px;
+    width: 24px;
+    padding: 0;
+    margin: 0;
+}
+</style>

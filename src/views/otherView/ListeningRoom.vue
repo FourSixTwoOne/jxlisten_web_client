@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useUserStore } from '@/stores';
+import { ref, onMounted, computed } from 'vue';
+import { useUserStore, useChatStore } from '@/stores';
 
 const userStore = useUserStore();
+const chatStore = useChatStore();
 
 onMounted(() => {
     getListeningRoom();
@@ -14,9 +15,11 @@ const listeningRoom = ref({
     host: '',
     playlist: [],
     members: [],
-    messages: [],
 });
 
+const messages = computed(() => {
+    return chatStore.getMessages(chatStore.MessageType.LISTENING_ROOM, listeningRoom.value.roomId);
+});
 const currentSongIndex = ref(0);
 const currentSong = ref(listeningRoom.value.playlist[currentSongIndex.value]);
 
@@ -54,10 +57,7 @@ const getListeningRoom = async () => {
             audioUrl: '@/assets/song3.mp3',
         },
     ];
-    listeningRoom.value.messages = [
-        { userId: 2, content: '你好！', time: 123456 },
-        { userId: 1, content: '大家准备好听歌了吗？', time: 123456 },
-    ];
+
     // listenroom.value = await getListeningRoomService(props.param.roomId);
 };
 
@@ -66,7 +66,8 @@ const handleSend = async (content) => {
     const newMsg = {
         content,
         senderId: userStore.user.userId,
-        time: Date.now() / 1000,
+        channelType: chatStore.MessageType.ROOM,
+        targetId: listeningRoom.value.roomId,
     };
 
     // 调用后端API发送消息
@@ -103,17 +104,30 @@ const handleUserProfile = (userId) => {
                 <div>房主: {{ listeningRoom.host.username }}</div>
             </div>
         </el-header>
+
         <div class="song-info">
             <div>{{ currentSong?.title || '未知歌曲' }}</div>
             ———
             <div v-if="currentSong?.type === 1">{{ currentSong.author }}</div>
             <div v-if="currentSong?.type === 2">{{ currentSong.publisher }}</div>
             <div v-if="currentSong?.type === 3">{{ currentSong.author }}</div>
+            <div class="more-choices">
+                <el-dropdown trigger="click">
+                    ...
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item>退出</el-dropdown-item>
+                            <el-dropdown-item>举报</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
+            </div>
         </div>
         <el-main>
             <div class="chat-area" :class="{ hei: isMember || isMusic }">
                 <ChatWindow
-                    :messages="listeningRoom.messages"
+                    :messages="messages"
+                    :key="messages"
                     :participants="listeningRoom.members"
                     @send="handleSend" />
             </div>
@@ -167,10 +181,21 @@ const handleUserProfile = (userId) => {
         display: flex;
         flex-direction: row;
         justify-content: center;
-        margin: 10px 0; // 增加顶部和底部的间距
+        margin: 10px 0;
+        position: relative;
+        .more-choices {
+            display: flex;
+            justify-content: center;
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            right: 0px;
+            border: $border2;
+            bottom: 0;
+        }
     }
     .chat-area {
-        height: calc(100% - 1px);
+        height: calc(100% - 2px);
         display: flex;
         border: $border2;
         font-size: small;

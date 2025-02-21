@@ -6,6 +6,7 @@ import CustomPagination from '@/components/CustomPagination.vue';
 import { uploadFileService } from '@/api/user';
 import { uploadMusicService, getMusicListService } from '@/api/music';
 import { useSongStore } from '@/stores';
+import { dateFormat } from '@/utils/dateFormat';
 
 const songStore = useSongStore();
 const isLoading = ref(false);
@@ -215,7 +216,11 @@ handleQuery();
                 </el-table-column>
                 <el-table-column label="发布者" prop="publisherId" />
                 <el-table-column label="作者" prop="author" />
-                <el-table-column label="上传时间" prop="uploadTime" />
+                <el-table-column label="上传时间" prop="uploadTime">
+                    <template #default="scope">
+                        {{ dateFormat(scope.row.uploadTime) }}
+                    </template>
+                </el-table-column>
                 <el-table-column label="播放" align="center">
                     <template #default="scope">
                         <div class="music-operation">
@@ -314,9 +319,14 @@ handleQuery();
             .music-operation {
                 display: flex;
                 flex-direction: row;
+                align-items: center;
+                justify-content: center;
                 gap: 2px;
                 .el-button {
-                    padding: 4px;
+                    height: 23px;
+                    width: 23px;
+                    padding: 0;
+                    margin: 0;
                 }
             }
         }

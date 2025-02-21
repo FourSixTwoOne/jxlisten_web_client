@@ -3,6 +3,7 @@ import { Search, Upload, User, Clock } from '@element-plus/icons-vue';
 import defaultCover from '@/assets/cover.jpg';
 import { createListeningRoomService, getListeningRoomListService } from '@/api/listenRoom';
 import { uploadFileService } from '@/api/user';
+import { dateFormat } from '@/utils/dateFormat';
 
 import { ref } from 'vue';
 
@@ -180,7 +181,7 @@ handleQuery();
                                     </span>
                                     <span class="create-time">
                                         <el-icon><Clock /></el-icon>
-                                        {{ room.createTime }}
+                                        {{ dateFormat(room.createTime) }}
                                     </span>
                                 </div>
 

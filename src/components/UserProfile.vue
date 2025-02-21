@@ -2,7 +2,7 @@
 import { useUserStore } from '@/stores';
 import { getUserByIdService } from '@/api/user';
 import { addFriendService } from '@/api/friend';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const props = defineProps({
     userId: {
@@ -14,10 +14,11 @@ const userStore = useUserStore();
 const emit = defineEmits(['close']);
 
 // 判断是否是好友
-const isFriend = ref(false);
-
+const isFriend = computed(() => {
+    return userStore.friendIds.some((id) => id === props.userId);
+});
 const handleClose = () => {
-    emit('close', null);
+    emit('close');
 };
 
 const handleAddFriend = async () => {
@@ -39,7 +40,6 @@ const handleChat = () => {
     userStore.isThreeVisible = true;
     userStore.viewParams = { name: 'friend', param: props.userId };
     handleClose();
-    console.log('跳转到与', user.value.name, '的聊天');
 };
 
 const deleteFriend = () => {
@@ -65,6 +65,17 @@ const handleReport = () => {
     });
 };
 
+const genderText = computed(() => {
+    switch (user.value?.gender) {
+        case 0:
+            return '男';
+        case 1:
+            return '女';
+        default:
+            return '保密';
+    }
+});
+
 getUser();
 </script>
 
@@ -74,13 +85,13 @@ getUser();
 
         <div class="modal-container">
             <div class="user-info">
-                <AvatarView :imageUrl="user.avatar" class="profile-avatar" />
-                <h2 class="username">{{ user.username }}</h2>
+                <AvatarView :imageUrl="user?.image" class="profile-avatar" />
+                <h2 class="username">{{ user?.username }}</h2>
                 <div class="meta-info">
-                    <span class="gender">{{ user.gender == 0 ? '男' : '女' }}</span>
-                    <span class="age">{{ user.age }}岁</span>
+                    <span class="gender">{{ genderText }}</span>
+                    <span class="age">{{ user?.age }}岁</span>
                 </div>
-                <div class="bio">{{ user.bio || '暂无简介' }}</div>
+                <div class="bio">{{ user?.bio || '暂无简介' }}</div>
             </div>
 
             <div class="action-buttons">

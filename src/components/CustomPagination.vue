@@ -34,7 +34,7 @@ const handleSizeChange = (newSize) => {
 const handleCurrentChange = (newPage) => {
     currentPage.value = newPage;
     emit('update:page', newPage);
-    handleQuery(); // 添加括号以调用方法
+    handleQuery(); 
 };
 </script>
 

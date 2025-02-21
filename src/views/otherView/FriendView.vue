@@ -1,58 +1,71 @@
 <script setup>
-import { ref } from 'vue';
-import { useUserStore } from '@/stores';
-import { getUserService } from '@/api/user';
+import { ref, computed } from 'vue';
+import { useUserStore, useChatStore } from '@/stores';
+import { getUserByIdService } from '@/api/user';
+import { ArrowUpBold } from '@element-plus/icons-vue';
 
 const props = defineProps({
     param: {
-        type: Object,
+        type: Number,
     },
 });
 
+const chatStore = useChatStore();
 const userStore = useUserStore();
 const isExpanded = ref(false);
 const userInfo = ref({
     username: '',
-    userId: props.param.Id,
+    userId: props.param,
     image: '',
     bio: '',
     gender: 0,
     age: 0,
 });
 
+const propData = computed(() => {
+    const map = new Map();
+    map.set(userInfo.value.userId, userInfo.value);
+    return map;
+});
+
 const getFriendInfo = async () => {
-    const res = await getUserService(props.param.userId);
+    if (userStore.user.userId === props.param) {
+        ElMessage.error('出错，不能与自己聊天');
+        userInfo.value = null;
+        return;
+    }
+    const res = await getUserByIdService(props.param);
     if (res.data.code === 1) {
         userInfo.value = res.data.data;
     }
 };
 
-const messages = ref([
-    {
-        content: '你好呀！',
-        senderId: 1,
-        time: 1234556,
-    },
-    {
-        content: '我很好，谢谢！',
-        senderId: 2,
-        time: 1234556,
-    },
-]);
+const messages = computed(() => {
+    return chatStore.getMessages(chatStore.MessageType.FRIEND, userInfo.value.userId);
+});
 
 // 处理消息发送
 const handleSend = async (content) => {
     const newMsg = {
-        content,
         senderId: userStore.user.userId,
-        timestamp: Date.now() / 1000,
+        content: content,
+        channelType: chatStore.MessageType.FRIEND,
+        targetId: userInfo.value.userId,
     };
+    chatStore.sendMessage(newMsg);
+};
 
-    // 调用后端API发送消息
-    // await api.sendMessage(newMsg);
-
-    // 添加到消息列表
-    messages.value.push(newMsg);
+// 清空聊天记录
+const cleanChat = (userId) => {
+    ElMessageBox.confirm('确定要清空聊天记录吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+    }).then(() => {
+        // 清空聊天记录
+        chatStore.clearMessages(chatStore.MessageType.FRIEND, userId);
+        chatStore.getMessages(chatStore.MessageType.FRIEND, userId);
+    });
 };
 
 getFriendInfo();
@@ -60,22 +73,45 @@ getFriendInfo();
 
 <template>
     <div class="container">
-        <!-- 好友信息头部 -->
+        <el-text size="large" type="primary">好友主页</el-text>
         <div class="header">
             <div class="profile" @click="isExpanded = !isExpanded">
-                <AvatarView :src="userInfo.image" class="avatar" />
+                <AvatarView :src="userInfo?.image" class="avatar" />
                 <div class="info">
-                    <h3>{{ userInfo.username }}</h3>
+                    <span class="name">
+                        {{ userInfo.username }}
+                    </span>
+
                     <p v-if="isExpanded" class="meta">
                         {{ userInfo.gender === 1 ? '女' : '男' }} · {{ userInfo.age }}岁
                     </p>
                 </div>
-                <span class="arrow" :class="{ expanded: isExpanded }">▼</span>
+
+                <span class="arrow" :class="{ expanded: isExpanded }"
+                    ><el-icon color="#409efc"><ArrowUpBold /></el-icon
+                ></span>
+            </div>
+            <div class="more-choices">
+                <el-dropdown trigger="click">
+                    ...
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item @click="cleanChat(props.param)"
+                                >清空聊天记录</el-dropdown-item
+                            >
+                            <el-dropdown-item>举报</el-dropdown-item>
+                            <el-dropdown-item>删除</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
             </div>
             <div v-if="isExpanded" class="bio">{{ userInfo.bio }}</div>
         </div>
-
-        <ChatWindow :messages="messages" :participants="userInfo" @send="handleSend" />
+        <ChatWindow
+            :messages="messages"
+            :key="messages"
+            :participants="propData"
+            @send="handleSend" />
     </div>
 </template>
 
@@ -87,29 +123,47 @@ getFriendInfo();
     flex-direction: column;
     height: 100%;
     width: 100%;
+    .title {
+        color: #000000;
+    }
 }
 
 .header {
     border-bottom: $border2;
-}
+    position: relative;
+    .profile {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        .name {
+            color: $name-color;
+        }
+    }
 
-.profile {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-}
+    .more-choices {
+        display: flex;
+        justify-content: center;
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        right: 0px;
+        border: $border2;
+        border-radius: 30%;
+        bottom: 0;
+    }
 
-.avatar {
-    width: 50px;
-    height: 50px;
+    .avatar {
+        width: 50px;
+        height: 50px;
+    }
 }
-
 .meta {
     padding: 0;
     margin: 0;
 }
 
 .arrow {
+    margin-right: 20px;
     margin-left: auto;
     transition: transform 0.3s;
 }

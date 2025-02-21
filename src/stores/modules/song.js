@@ -1,15 +1,16 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 
-// 使用枚举定义播放模式，提高可读性和维护性
-const PlayMode = {
-    SEQUENTIAL: 0,
-    SINGLE_LOOP: 1,
-    RANDOM: 2,
-};
 export const useSongStore = defineStore(
     'song',
     () => {
+        // 使用枚举定义播放模式，提高可读性和维护性
+
+        const PlayMode = {
+            SEQUENTIAL: 0,
+            SINGLE_LOOP: 1,
+            RANDOM: 2,
+        };
         const audio = ref(null);
         const isPlaying = ref(false);
         const isSeeking = ref(false);
@@ -268,17 +269,10 @@ export const useSongStore = defineStore(
     {
         persist: {
             key: 'music-player-storage',
-            paths: [
-                // 移除 'audio' 和 'currentSong'（currentSong 是计算属性，不需要持久化）
-                'playlist',
-                'currentIndex',
-                'playMode',
-                'currentTime',
-                'totalTime',
-            ],
+            paths: ['playlist', 'currentIndex', 'playMode', 'currentTime', 'totalTime'],
             afterRestore: (ctx) => {
                 ctx.store.validatePlaylist?.();
-                ctx.store.initAudio?.(); // 恢复后重新初始化 audio 实例
+                ctx.store.initAudio?.(); 
             },
         },
     }

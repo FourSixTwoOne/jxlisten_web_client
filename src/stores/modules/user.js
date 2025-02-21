@@ -7,15 +7,14 @@ import { getUserService } from '@/api/user';
 export const useUserStore = defineStore(
     'user',
     () => {
-        const token = ref(''); // 使用导入的 ref
+        const token = ref(''); 
         const setToken = (newToken) => {
             token.value = newToken;
         };
         const removeToken = () => {
             token.value = '';
         };
-        const friendIdList = ref([]);
-        const addrecordsList = ref([]);
+        const friendIds = ref([]);
         const isThreeVisible = ref(false);
         const viewParams = ref({
             name: '',
@@ -37,8 +36,6 @@ export const useUserStore = defineStore(
             if (res.data.code === 1) {
                 user.value = res.data.data;
             }
-
-            console.log('user:', user.value);
         };
         const setUser = (newUser) => {
             user.value = newUser;
@@ -48,8 +45,7 @@ export const useUserStore = defineStore(
             token,
             setToken,
             removeToken,
-            friendIdList,
-            addrecordsList,
+            friendIds,
             isThreeVisible,
             viewParams,
             user,

@@ -8,3 +8,5 @@ export default pinia;
 
 export * from './modules/user';
 export * from './modules/song';
+export * from './modules/listeningRoom';
+export * from './modules/chat';

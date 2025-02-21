@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
-import { useUserStore, useSongStore } from '@/stores';
+import { useUserStore, useSongStore, useChatStore } from '@/stores';
 import ProfilePage from '@/views/userView/ProfilePage.vue';
 import logo from '@/assets/logo-192x192.png';
 import nameLogo from '@/assets/juexianlisten.png';
@@ -8,6 +8,7 @@ import { Headset, HomeFilled } from '@element-plus/icons-vue';
 import ThreeContainer from '@/views/component/ThreeContainer.vue';
 import router from '@/router';
 
+const chatStore = useChatStore();
 const songStore = useSongStore();
 const userStore = useUserStore();
 const isProfileVisible = ref(false);
@@ -44,10 +45,15 @@ const closeThreeContainer = () => {
 
 onMounted(() => {
     songStore.initAudio();
+    chatStore.createWebSocket(userStore.token);
+    userStore.isThreeVisible = false;
+    userStore.viewParams = {name: 'music',param: null};
 });
 
 onUnmounted(() => {
     songStore.clean();
+    userStore.isThreeVisible = false;
+    userStore.viewParams.value = {name: 'music',param: null};
 });
 </script>
 
@@ -68,7 +74,12 @@ onUnmounted(() => {
                             type="primary"
                             size="small"
                             class="play-btn"
-                            @click="changeContent({ name: 'music', param: null })"
+                            @click="
+                                changeContent({
+                                    name: 'music',
+                                    param: songStore.currentSong?.musicId,
+                                })
+                            "
                             >播放器</el-button
                         >
                     </div>
@@ -89,7 +100,7 @@ onUnmounted(() => {
                             ><strong>{{ userStore.user?.username || '未知用户' }}</strong></span
                         >
                         <div class="avatar-container">
-                            <AvatarView :imageUrl="userStore.user?.avatar" @click="toggleProfile" />
+                            <AvatarView :imageUrl="userStore.user?.image" @click="toggleProfile" />
                         </div>
                     </div>
 
@@ -145,7 +156,7 @@ onUnmounted(() => {
                 <div class="two-column">
                     <router-view />
                 </div>
-                <div class="three-container" v-if="userStore.isThreeVisible">
+                <div class="three-container" v-if="userStore.isThreeVisible" >
                     <button type="button" class="close-button" @click="closeThreeContainer">
                         ×
                     </button>
@@ -223,7 +234,7 @@ onUnmounted(() => {
                 gap: 10px;
                 margin-right: 10px;
                 font-size: 12px;
-                color: rgb(47, 222, 137);
+                color: $name-color;
             }
             .avatar-container {
                 cursor: pointer;

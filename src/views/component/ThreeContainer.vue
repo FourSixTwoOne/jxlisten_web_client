@@ -34,6 +34,6 @@ const currentComponent = computed(() => {
 <template>
     <div class="three-container">
         <!-- 传递动态参数到组件 -->
-        <component :is="currentComponent" :param="viewParams.param" :key="viewParams.name"></component>
+        <component :is="currentComponent" :param="viewParams.param" :key="`${viewParams.name}-${viewParams.param}`"></component>
     </div>
 </template>
